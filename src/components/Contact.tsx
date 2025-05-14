@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { enUS } from "date-fns/locale";
 import {
   Clock,
   Mail,
@@ -33,6 +36,7 @@ const Contact: React.FC = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,7 +150,9 @@ const Contact: React.FC = () => {
                       </div>
                       <div>
                         <h4 className="text-white/50 text-sm">Email</h4>
-                        <p className="text-white">info@inkandshadow.com</p>
+                        <p className="text-white">
+                          artlllex.official@gmail.com
+                        </p>
                       </div>
                     </div>
 
@@ -156,7 +162,7 @@ const Contact: React.FC = () => {
                       </div>
                       <div>
                         <h4 className="text-white/50 text-sm">Phone</h4>
-                        <p className="text-white">(555) 123-4567</p>
+                        <p className="text-white">(301) 232-8339</p>
                       </div>
                     </div>
 
@@ -167,7 +173,7 @@ const Contact: React.FC = () => {
                       <div>
                         <h4 className="text-white/50 text-sm">Location</h4>
                         <p className="text-white">
-                          123 Art District, Creative City
+                          8607 2nd Ave, Silver Spring, MD 20910, US
                         </p>
                       </div>
                     </div>
@@ -180,7 +186,9 @@ const Contact: React.FC = () => {
                     </h4>
                     <div className="flex space-x-3">
                       <a
-                        href="#"
+                        href="https://www.instagram.com/art_lllex/"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-all duration-300 hover:scale-110"
                         aria-label="Instagram"
                       >
@@ -192,13 +200,6 @@ const Contact: React.FC = () => {
                         aria-label="Facebook"
                       >
                         <Facebook className="w-5 h-5" />
-                      </a>
-                      <a
-                        href="#"
-                        className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-all duration-300 hover:scale-110"
-                        aria-label="Twitter"
-                      >
-                        <Twitter className="w-5 h-5" />
                       </a>
                     </div>
                   </div>
@@ -436,10 +437,14 @@ const Contact: React.FC = () => {
                         </label>
                         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-md px-3 py-2">
                           <Calendar className="h-5 w-5 text-white/50" />
-                          <Input
-                            id="availability"
-                            type="date"
-                            className="border-0 bg-transparent text-white focus:ring-0 p-0 focus:outline-none"
+                          <DatePicker
+                            selected={selectedDate}
+                            onChange={(date: Date | null) =>
+                              setSelectedDate(date)
+                            }
+                            locale={enUS}
+                            placeholderText="mm/dd/yyyy"
+                            className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
                           />
                         </div>
                         <p className="text-white/50 text-xs mt-1">

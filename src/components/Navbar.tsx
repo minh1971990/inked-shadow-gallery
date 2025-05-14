@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaInstagram } from "react-icons/fa";
 import { PiSparkleFill } from "react-icons/pi";
+import { useBooking } from "./BookingContent";
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const { openBookingForm } = useBooking();
 
   // Handle scroll events
   useEffect(() => {
@@ -34,7 +36,7 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: "Gallery", href: "#gallery", id: "gallery" },
     { name: "About", href: "#about", id: "about" },
-    { name: "Services", href: "#services", id: "services" },
+    { name: "Booking Information", href: "#policies", id: "policies" },
     { name: "Contact", href: "#contact", id: "contact" },
   ];
 
@@ -66,7 +68,7 @@ const Navbar: React.FC = () => {
             </div>
             <div>
               <span className="text-2xl font-heading font-black tracking-tighter text-white">
-                INK <span className="text-white/80">&</span> SHADOW
+                ART LLLEX
               </span>
               <span className="block text-[10px] text-white/60 tracking-widest -mt-1 font-light">
                 TATTOO ARTISTRY
@@ -120,6 +122,7 @@ const Navbar: React.FC = () => {
             <Button
               variant="outline"
               className="border-white/30 text-black hover:bg-white hover:text-black transition-all duration-300 rounded-full px-6"
+              onClick={openBookingForm}
             >
               BOOK NOW
             </Button>

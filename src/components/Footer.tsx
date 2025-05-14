@@ -5,6 +5,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PiSparkleFill } from "react-icons/pi";
 import {
   Instagram,
   Facebook,
@@ -62,12 +63,15 @@ const Footer: React.FC = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-3">
-                  <span className="text-white font-bold text-xl">I&S</span>
+                <div className="w-10 h-10 mr-2 relative hidden sm:block">
+                  <div className="absolute inset-0 bg-white rounded-full opacity-10"></div>
+                  <div className="absolute inset-1 bg-black rounded-full flex items-center justify-center">
+                    <PiSparkleFill className="text-white/80 text-lg" />
+                  </div>
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold tracking-tight">
-                    INK & SHADOW
+                    ART LLLEX
                   </h3>
                   <div className="text-[10px] text-white/60 uppercase tracking-widest -mt-1">
                     Tattoo Artistry
@@ -121,12 +125,14 @@ const Footer: React.FC = () => {
               </h4>
               <ul className="space-y-3">
                 {[
-                  { name: "Gallery", href: "#gallery" },
-                  { name: "About", href: "#about" },
-                  { name: "Contact", href: "#contact" },
-                  { name: "FAQ", href: "#" },
-                  { name: "Aftercare", href: "#" },
-                  { name: "Privacy Policy", href: "#" },
+                  { name: "Gallery", href: "#gallery", id: "gallery" },
+                  { name: "About", href: "#about", id: "about" },
+                  {
+                    name: "Booking Information",
+                    href: "#policies",
+                    id: "policies",
+                  },
+                  { name: "Contact", href: "#contact", id: "contact" },
                 ].map((link, index) => (
                   <motion.li
                     key={link.name}
@@ -168,9 +174,9 @@ const Footer: React.FC = () => {
                     className="mr-3 text-white/50 mt-1 flex-shrink-0"
                   />
                   <div>
-                    123 Art District
+                    8607 2nd Ave
                     <br />
-                    Creative City, ST 12345
+                    Silver Spring, MD 20910, US
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -178,14 +184,14 @@ const Footer: React.FC = () => {
                     size={18}
                     className="mr-3 text-white/50 flex-shrink-0"
                   />
-                  <span>(555) 123-4567</span>
+                  <span>(301) 232-8339</span>
                 </div>
                 <div className="flex items-center">
                   <Mail
                     size={18}
                     className="mr-3 text-white/50 flex-shrink-0"
                   />
-                  <span>info@inkandshadow.com</span>
+                  <span>artlllex.official@gmail.com</span>
                 </div>
               </address>
 
@@ -267,7 +273,7 @@ const Footer: React.FC = () => {
         {/* Bottom footer */}
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-white/50 text-sm mb-4 md:mb-0">
-            © {currentYear} Ink & Shadow Studio. All rights reserved.
+            © {currentYear} Artlllex. All rights reserved.
           </p>
           <p className="text-white/50 text-sm">
             Website designed and developed by{" "}

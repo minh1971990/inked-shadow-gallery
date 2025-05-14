@@ -88,7 +88,7 @@ const Gallery: React.FC = () => {
             <div className="flex items-center justify-center gap-3 mb-2">
               <div className="w-8 h-[1px] bg-gradient-to-r from-transparent to-white/70"></div>
               <span className="text-white/70 uppercase text-sm tracking-widest font-light">
-                Our Work
+                My Work
               </span>
               <div className="w-8 h-[1px] bg-gradient-to-l from-transparent to-white/70"></div>
             </div>

@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaRegImages, FaRegCalendarCheck, FaInstagram } from "react-icons/fa";
 import { PiSparkleFill } from "react-icons/pi";
+import { useBooking } from "./BookingContent";
 
 const Hero: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { openBookingForm } = useBooking();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -115,7 +117,7 @@ const Hero: React.FC = () => {
           }}
         >
           <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-gray-200 to-gray-400">
-            MASTERS OF
+            ARTs OF
           </span>
           <motion.span
             className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-[#e0e0e0] via-white to-gray-400"
@@ -127,7 +129,7 @@ const Hero: React.FC = () => {
               repeatType: "reverse",
             }}
           >
-            BLACK & GREY
+            ALEX
           </motion.span>
         </motion.h1>
 
@@ -144,10 +146,7 @@ const Hero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
         >
-          Premium tattoo artistry specializing in black and grey designs,
-          bringing your vision to life with{" "}
-          <span className="text-white font-normal">precision</span> and{" "}
-          <span className="text-white font-normal">creativity</span>.
+          DMV Tattoo - Rockville Maryland, US
         </motion.p>
 
         <motion.div
@@ -157,7 +156,8 @@ const Hero: React.FC = () => {
           transition={{ duration: 1, delay: 0.4 }}
         >
           <Button
-            className="w-full sm:w-auto text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 bg-white text-black hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg"
+            variant="outline"
+            className="w-full sm:w-auto text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg"
             size="lg"
           >
             <FaRegImages className="text-xl" />
@@ -167,6 +167,7 @@ const Hero: React.FC = () => {
             variant="outline"
             className="w-full sm:w-auto text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg"
             size="lg"
+            onClick={openBookingForm}
           >
             <FaRegCalendarCheck className="text-xl" />
             Book Consultation
@@ -215,11 +216,13 @@ const Hero: React.FC = () => {
         >
           <div className="flex items-center gap-2">
             <FaInstagram className="text-xl" />
-            <span className="text-sm font-light">@tattoo_masters</span>
+            <span className="text-sm font-light">@art_lllex</span>
           </div>
           <div className="flex items-center gap-2">
             <PiSparkleFill className="text-xl" />
-            <span className="text-sm font-light">500+ satisfied clients</span>
+            <span className="text-sm font-light">
+              artlllex.official@gmail.com
+            </span>
           </div>
         </motion.div>
 

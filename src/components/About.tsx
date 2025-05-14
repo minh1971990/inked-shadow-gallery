@@ -3,7 +3,7 @@
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Award, Star, Clock, Users, ChevronRight } from "lucide-react";
+import { Award, Star, Clock, Users, ChevronRight, Info } from "lucide-react";
 
 const About: React.FC = () => {
   return (
@@ -34,8 +34,7 @@ const About: React.FC = () => {
             </h2>
           </div>
           <p className="text-white/70 max-w-2xl mx-auto text-lg">
-            Dedicated to the art of black and grey tattoo design, creating
-            unique pieces that tell your story through ink.
+            WELCOME TO MY SITE
           </p>
         </motion.div>
 
@@ -70,14 +69,14 @@ const About: React.FC = () => {
                       <Clock className="w-4 h-4 text-white/70" />
                       <span className="text-white/70 text-xs">Experience</span>
                     </div>
-                    <p className="text-white text-xl font-bold">15+ Years</p>
+                    <p className="text-white text-xl font-bold">10+ Years</p>
                   </div>
                   <div className="bg-black/60 backdrop-blur-sm p-4 rounded-lg border border-white/10">
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="w-4 h-4 text-white/70" />
                       <span className="text-white/70 text-xs">Clients</span>
                     </div>
-                    <p className="text-white text-xl font-bold">1,000+</p>
+                    <p className="text-white text-xl font-bold">999+</p>
                   </div>
                 </div>
               </div>
@@ -88,9 +87,7 @@ const About: React.FC = () => {
 
             {/* Artist name card */}
             <div className="absolute -bottom-12 -left-12 bg-white/5 backdrop-blur-md p-4 rounded-lg border border-white/10 z-20">
-              <h3 className="text-white text-2xl font-bold mb-1">
-                Alex Rivera
-              </h3>
+              <h3 className="text-white text-2xl font-bold mb-1">A L E X</h3>
               <p className="text-white/70 text-sm">Founder & Lead Artist</p>
             </div>
           </motion.div>
@@ -104,17 +101,15 @@ const About: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/10">
-                  <Award className="w-6 h-6 text-white/80" />
+                  <Info className="w-6 h-6 text-white/80" />
                 </div>
                 <div>
                   <h3 className="text-white text-xl font-semibold mb-2">
-                    My Journey
+                    About Me
                   </h3>
                   <p className="text-white/70 leading-relaxed">
-                    With over 15 years of experience in fine art and 10 years
-                    specializing in tattoo design, I've developed a distinctive
-                    style focused on black and grey realism with contemporary
-                    elements.
+                    My name is Alex, tattoo artist of the DMV. I specialize in
+                    black/grey tattoos. I do not take color pieces.
                   </p>
                 </div>
               </div>
@@ -125,13 +120,14 @@ const About: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-white text-xl font-semibold mb-2">
-                    Recognition
+                    About My Work
                   </h3>
                   <p className="text-white/70 leading-relaxed">
-                    My work has been featured in international tattoo
-                    publications and exhibitions. I believe in creating custom
-                    pieces that not only look stunning but carry personal
-                    significance for each client.
+                    Dark-Art, Morderned-Japanese, Hyper-Detailed are my most
+                    favorite topics. ​ I do take new design, custom design and
+                    appointment only. I appreciate client who works respectful.
+                    My primary focus is on delivering fair and high-quality
+                    work.
                   </p>
                 </div>
               </div>
@@ -140,7 +136,7 @@ const About: React.FC = () => {
                 <h3 className="text-white text-xl font-semibold mb-4">
                   Specialties
                 </h3>
-                <div className="flex flex-wrap gap-2 mb-8">
+                <div className="cursor-pointer flex flex-wrap gap-2 mb-8">
                   {[
                     "Black & Grey",
                     "Dotwork",
@@ -165,14 +161,15 @@ const About: React.FC = () => {
               </div>
 
               <div className="mt-8 space-y-4">
-                <h3 className="text-white text-xl font-semibold">Philosophy</h3>
+                <h3 className="text-white text-xl font-semibold">
+                  Dear Clients
+                </h3>
                 <p className="text-white/70 leading-relaxed">
-                  "I believe tattoos are more than just ink on skin—they're
-                  permanent expressions of identity, stories, and art. My goal
-                  is to collaborate with each client to create a piece that
-                  resonates with their personal journey while standing as a
-                  timeless work of art."
+                  "I am grateful for the support and trust you have placed in
+                  me. Thank you for taking the time to read this, as your
+                  patronage has been instrumental in my career success."
                 </p>
+                <p className="text-white/70 text-end pr-14">Regards, Alex.</p>
                 <div className="pt-4">
                   <Button className="bg-white text-black hover:bg-white/90 rounded-full px-6 group">
                     Read Full Bio
