@@ -28,38 +28,7 @@ const Hero: React.FC = () => {
 
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-black">
-      {/* Animated ink splash background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <motion.div
-          className="absolute inset-0"
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-        >
-          <div
-            className="w-full h-full bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1562962230-16e4623d36e7?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3')",
-              filter: "grayscale(100%) contrast(1.2) brightness(0.8)",
-            }}
-          ></div>
-        </motion.div>
-
-        {/* Ink splash overlays */}
-        <motion.div
-          className="absolute inset-0 opacity-40"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
-          transition={{ duration: 2, delay: 0.5 }}
-          style={{
-            backgroundImage: "url('/placeholder.svg?height=1080&width=1920')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            mixBlendMode: "overlay",
-          }}
-        ></motion.div>
-
         {/* Tattoo design overlays */}
         <motion.div
           className="absolute left-0 top-0 w-1/3 h-full opacity-20"
@@ -107,8 +76,19 @@ const Hero: React.FC = () => {
       {/* Main content */}
       <div className="container mx-auto px-4 relative z-10 flex flex-col items-center justify-center py-16">
         {/* Artist signature/logo */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="text-white/80 text-sm tracking-[0.3em] uppercase mb-2 text-center">
+            Established 2015
+          </div>
+        </motion.div>
+
         <motion.h1
-          className="mt-10 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-center mb-6 tracking-tighter leading-[0.9] drop-shadow-[0_4px_30px_rgba(0,0,0,0.9)]"
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-center mb-6 tracking-tighter leading-[0.9] drop-shadow-[0_4px_30px_rgba(0,0,0,0.9)]"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
@@ -117,7 +97,7 @@ const Hero: React.FC = () => {
           }}
         >
           <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-gray-200 to-gray-400">
-            ARTs OF
+            MASTERS OF
           </span>
           <motion.span
             className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-[#e0e0e0] via-white to-gray-400"
@@ -129,7 +109,7 @@ const Hero: React.FC = () => {
               repeatType: "reverse",
             }}
           >
-            ALEX
+            BLACK & GREY
           </motion.span>
         </motion.h1>
 
@@ -141,7 +121,7 @@ const Hero: React.FC = () => {
         ></motion.div>
 
         <motion.p
-          className="text-gray-300 text-lg sm:text-xl md:text-2xl text-center mb-10 max-w-2xl mx-auto px-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] font-light"
+          className="text-gray-300 text-lg sm:text-xl md:text-2xl text-center mb-20 max-w-2xl mx-auto px-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] font-light"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
@@ -155,24 +135,66 @@ const Hero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4 }}
         >
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg"
-            size="lg"
-          >
-            <FaRegImages className="text-xl" />
-            View Gallery
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg"
-            size="lg"
-            onClick={openBookingForm}
-          >
-            <FaRegCalendarCheck className="text-xl" />
-            Book Consultation
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto">
+            <Button
+              asChild
+              variant="outline"
+              className="text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg w-full"
+              size="lg"
+            >
+              <a href="#gallery">
+                <FaRegImages className="text-xl" />
+                View Gallery
+              </a>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg w-full"
+              size="lg"
+              onClick={openBookingForm}
+            >
+              <FaRegCalendarCheck className="text-xl" />
+              Booking
+            </Button>
+          </div>
         </motion.div>
+
+        <AnimatePresence>
+          {scrollY < 100 && (
+            <motion.div
+              className="flex flex-col items-center mt-8"
+              initial={{ opacity: 1 }}
+              animate={{
+                opacity: 1,
+                y: [0, 10, 0],
+              }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{
+                opacity: { duration: 1 },
+                y: { duration: 1.5, repeat: Number.POSITIVE_INFINITY },
+              }}
+            >
+              <p className="text-white/70 text-sm mb-2 font-light tracking-wider drop-shadow">
+                Scroll to Explore
+              </p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-white/70"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Featured work preview */}
         <motion.div
@@ -209,45 +231,19 @@ const Hero: React.FC = () => {
 
         {/* Social proof */}
         <motion.div
-          className="flex items-center justify-center gap-8 mb-20 text-white/70"
+          className="flex items-center justify-center gap-8 text-white/70"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.8 }}
         >
           <div className="flex items-center gap-2">
             <FaInstagram className="text-xl" />
-            <span className="text-sm font-light">@art_lllex</span>
+            <span className="text-sm font-light">@tattoo_masters</span>
           </div>
           <div className="flex items-center gap-2">
             <PiSparkleFill className="text-xl" />
-            <span className="text-sm font-light">
-              artlllex.official@gmail.com
-            </span>
+            <span className="text-sm font-light">500+ satisfied clients</span>
           </div>
-        </motion.div>
-
-        <motion.div
-          className="absolute bottom-10 -translate-x-1/2 flex flex-col items-center"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
-        >
-          <p className="text-white/70 text-sm mb-2 font-light tracking-wider drop-shadow">
-            Scroll to Explore
-          </p>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-white/70"
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
         </motion.div>
       </div>
     </section>
