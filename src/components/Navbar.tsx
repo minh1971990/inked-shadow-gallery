@@ -27,7 +27,7 @@ const Logo = ({ isMenuOpen }) => (
       </div>
       <div>
         <span className="text-2xl font-heading font-black tracking-tighter text-white">
-          INK <span className="text-white/80">&</span> SHADOW
+          ART LLLEX
         </span>
         <span className="block text-[10px] text-white/60 tracking-widest -mt-1 font-light">
           TATTOO ARTISTRY
@@ -68,11 +68,12 @@ const DesktopMenu = ({
     <div className="flex items-center gap-3">
       <Button
         variant="outline"
-        className="relative border-white/30 text-white hover:bg-white hover:text-black transition-all duration-300 rounded-full px-6 overflow-hidden group"
+        className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white"
         onClick={openBookingForm}
       >
-        <span className="relative z-10 text-black">BOOK NOW</span>
-        <span className="absolute inset-0 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-0"></span>
+        <span className="relative z-10 text-white group-hover:text-black group-active:text-black transition-colors">
+          BOOK NOW
+        </span>
       </Button>
     </div>
 
@@ -176,14 +177,15 @@ const MobileMenu = ({
       >
         <Button
           variant="outline"
-          className="relative border-white/30 text-white hover:bg-white hover:text-black transition-all duration-300 rounded-full px-6 overflow-hidden group"
+          className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white"
           onClick={() => {
             toggleMenu();
             openBookingForm();
           }}
         >
-          <span className="relative z-10 text-black">BOOK NOW</span>
-          <span className="absolute inset-0 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left z-0"></span>
+          <span className="relative z-10 transition-colors duration-300 ease-in-out group-hover:text-black text-white">
+            BOOK NOW
+          </span>
         </Button>
       </div>
 

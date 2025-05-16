@@ -97,7 +97,7 @@ const Hero: React.FC = () => {
           }}
         >
           <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-gray-200 to-gray-400">
-            MASTERS OF
+            ARTs OF
           </span>
           <motion.span
             className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-[#e0e0e0] via-white to-gray-400"
@@ -109,7 +109,7 @@ const Hero: React.FC = () => {
               repeatType: "reverse",
             }}
           >
-            BLACK & GREY
+            ALEX
           </motion.span>
         </motion.h1>
 
@@ -139,7 +139,7 @@ const Hero: React.FC = () => {
             <Button
               asChild
               variant="outline"
-              className="text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg w-full"
+              className="text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 hover:text-white transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg w-full"
               size="lg"
             >
               <a href="#gallery">
@@ -150,7 +150,7 @@ const Hero: React.FC = () => {
 
             <Button
               variant="outline"
-              className="text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg w-full"
+              className="text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 hover:text-white transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg w-full"
               size="lg"
               onClick={openBookingForm}
             >
