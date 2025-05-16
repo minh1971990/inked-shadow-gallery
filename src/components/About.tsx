@@ -86,7 +86,7 @@ const About: React.FC = () => {
             <div className="absolute top-8 -right-8 w-full h-full border-2 border-white/20 rounded-lg -z-10"></div>
 
             {/* Artist name card */}
-            <div className="absolute -bottom-12 -left-12 bg-white/5 backdrop-blur-md p-4 rounded-lg border border-white/10 z-20">
+            <div className="absolute -bottom-10 sm:-bottom-12 left-1/2 sm:-left-12 -translate-x-1/2 sm:translate-x-0 bg-white/5 backdrop-blur-md p-3 sm:p-4 rounded-lg border border-white/10 z-20 text-center sm:text-left">
               <h3 className="text-white text-2xl font-bold mb-1">A L E X</h3>
               <p className="text-white/70 text-sm">Founder & Lead Artist</p>
             </div>
@@ -169,7 +169,7 @@ const About: React.FC = () => {
                   me. Thank you for taking the time to read this, as your
                   patronage has been instrumental in my career success."
                 </p>
-                <p className="text-white/70 text-end pr-14">Regards, Alex.</p>
+                <p className="text-white/70 text-end pr-7">Regards, Alex.</p>
                 <div className="pt-4">
                   <Button className="bg-white text-black hover:bg-white/90 rounded-full px-6 group">
                     Read Full Bio

@@ -82,7 +82,7 @@ const Hero: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="text-white/80 text-sm tracking-[0.3em] uppercase mb-2 text-center">
+          <div className="text-white/80 mt-3 text-sm tracking-[0.3em] uppercase mb-2 text-center">
             Established 2015
           </div>
         </motion.div>

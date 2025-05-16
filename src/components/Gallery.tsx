@@ -186,22 +186,20 @@ const Gallery: React.FC = () => {
 
         {/* Image Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-5xl bg-black/95 p-0 border border-white/10 rounded-lg overflow-hidden backdrop-blur-xl">
+          <DialogContent className="sm:max-w-4xl bg-black/95 p-0 border border-white/10 rounded-lg overflow-hidden backdrop-blur-xl h-[90vh] flex flex-col">
+            <button
+              onClick={() => setIsDialogOpen(false)}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 p-1.5 sm:p-2 rounded-full bg-white/30 text-white/70 hover:text-white hover:bg-black/70 transition-all hover:scale-110"
+              aria-label="Close dialog"
+            >
+              <X size={18} className="pointer-events-none" />
+            </button>
             {selectedImage && (
-              <div className="relative">
-                {/* Close button */}
-                <button
-                  className="absolute top-3 right-3 z-30 text-white/70 hover:text-white bg-black/50 w-8 h-8 flex items-center justify-center rounded-full transition-all hover:scale-110"
-                  onClick={() => setIsDialogOpen(false)}
-                  aria-label="Close dialog"
-                >
-                  <X size={20} className="pointer-events-none" />
-                </button>
-
-                {/* Navigation buttons */}
-                <div className="absolute inset-y-0 bottom-48 left-0 flex items-center z-20">
+              <div className="relative flex flex-col h-full">
+                {/* Navigation buttons with improved positioning */}
+                <div className="absolute inset-y-0 bottom-20 left-0 flex items-center z-20 px-1 sm:px-2">
                   <button
-                    className={`p-1.5 bg-black/50 rounded-r-full text-white/70 hover:text-white transition-all ${
+                    className={`p-1 sm:p-2 bg-white/20 rounded-full text-white/70 hover:text-white hover:bg-white/50 transition-all ${
                       selectedIndex <= 0
                         ? "opacity-50 cursor-not-allowed"
                         : "hover:bg-black/70 hover:scale-110"
@@ -210,12 +208,12 @@ const Gallery: React.FC = () => {
                     disabled={selectedIndex <= 0}
                     aria-label="Previous image"
                   >
-                    <ChevronLeft size={30} className="pointer-events-none" />
+                    <ChevronLeft size={18} className="pointer-events-none" />
                   </button>
                 </div>
-                <div className="absolute inset-y-0 bottom-48 right-0 flex items-center z-20">
+                <div className="absolute inset-y-0 bottom-20 right-0 flex items-center z-20 px-1 sm:px-2">
                   <button
-                    className={`p-1.5 bg-black/50 rounded-l-full text-white/70 hover:text-white transition-all ${
+                    className={`p-1.5 sm:p-2 bg-white/20 rounded-full text-white/70 hover:text-white hover:bg-white/50 transition-all ${
                       selectedIndex >= filteredImages.length - 1
                         ? "opacity-50 cursor-not-allowed"
                         : "hover:bg-black/70 hover:scale-110"
@@ -224,66 +222,69 @@ const Gallery: React.FC = () => {
                     disabled={selectedIndex >= filteredImages.length - 1}
                     aria-label="Next image"
                   >
-                    <ChevronRight size={30} className="pointer-events-none" />
+                    <ChevronRight size={18} className="pointer-events-none" />
                   </button>
                 </div>
 
-                {/* Image with animated transition */}
+                {/* Image with enhanced animations */}
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={selectedImage.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative overflow-hidden"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="relative flex-1 flex flex-col items-center"
                   >
-                    <div className="relative max-h-[65vh] overflow-hidden flex items-center justify-center bg-black/30">
-                      <motion.img
-                        src={selectedImage.imageUrl || "/placeholder.svg"}
-                        alt={selectedImage.title}
-                        className="w-full h-full object-contain max-h-[65vh]"
-                        initial={{ scale: 0.95 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.4 }}
-                      />
-
-                      {/* Subtle ink splatter overlay */}
-                      <div className="absolute inset-0 pointer-events-none opacity-10 mix-blend-overlay">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    {/* Image container with fixed height */}
+                    <div className="flex-1 min-h-0 relative w-full">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <div className="w-[85%] sm:w-[400px] md:w-[500px] h-[200px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-lg relative group">
+                          <motion.img
+                            src={selectedImage.imageUrl || "/placeholder.svg"}
+                            alt={selectedImage.title}
+                            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                            initial={{ scale: 0.95 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.4 }}
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    {/* Image info with improved layout - more compact */}
-                    <div className="p-4 bg-gradient-to-t from-black via-black/95 to-black/90">
-                      <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-4 h-[1px] bg-white/30"></div>
-                            <span className="text-white/60 text-xs uppercase tracking-wider">
+                    {/* Image info with enhanced layout */}
+                    <div className="w-full p-3 sm:p-4 bg-gradient-to-t from-black via-black/95 to-black/90">
+                      <div className="flex flex-col items-center gap-3 mb-3">
+                        <div className="flex-1 text-center">
+                          <div className="flex items-center justify-center gap-3 mb-2">
+                            <div className="w-6 sm:w-8 h-[1px] bg-gradient-to-r from-transparent to-white/70"></div>
+                            <span className="text-white/60 text-xs uppercase tracking-wider font-medium whitespace-nowrap">
                               Tattoo Design
                             </span>
+                            <div className="w-6 sm:w-8 h-[1px] bg-gradient-to-l from-transparent to-white/70"></div>
                           </div>
-                          <h3 className="text-white text-xl font-semibold mb-1">
+                          <h3 className="text-white text-lg sm:text-xl font-semibold mb-2">
                             {selectedImage.title}
                           </h3>
-                          <p className="text-white/70 text-xs">
-                            {selectedImage.category
-                              .map(
-                                (cat) =>
-                                  cat.charAt(0).toUpperCase() + cat.slice(1)
-                              )
-                              .join(", ")}
-                          </p>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {selectedImage.category.map((cat) => (
+                              <span
+                                key={cat}
+                                className="px-2 py-0.5 bg-white/10 rounded-full text-white/80 text-xs"
+                              >
+                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                         <div className="flex gap-2">
-                          <button className="p-1.5 text-white/70 hover:text-white transition-all hover:bg-white/10 rounded-full">
+                          <button className="p-1.5 text-white/70 hover:text-white transition-all hover:bg-white/10 rounded-full hover:scale-110">
                             <Heart size={16} className="pointer-events-none" />
                           </button>
-                          <button className="p-1.5 text-white/70 hover:text-white transition-all hover:bg-white/10 rounded-full">
+                          <button className="p-1.5 text-white/70 hover:text-white transition-all hover:bg-white/10 rounded-full hover:scale-110">
                             <Share2 size={16} className="pointer-events-none" />
                           </button>
-                          <button className="p-1.5 text-white/70 hover:text-white transition-all hover:bg-white/10 rounded-full">
+                          <button className="p-1.5 text-white/70 hover:text-white transition-all hover:bg-white/10 rounded-full hover:scale-110">
                             <Download
                               size={16}
                               className="pointer-events-none"
@@ -292,60 +293,34 @@ const Gallery: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="sm:col-span-2">
-                          <p className="text-white/80 text-sm">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div>
+                          <p className="text-white/80 text-sm leading-relaxed text-center max-w-2xl mx-auto">
                             {selectedImage.description}
                           </p>
 
-                          {/* Additional details section - more compact */}
-                          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <div>
-                              <h4 className="text-white/50 text-xs uppercase mb-0.5">
+                          {/* Enhanced details section */}
+                          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-2xl mx-auto">
+                            <div className="p-2 sm:p-3 bg-white/5 border border-white rounded-lg text-center">
+                              <h4 className="text-white/50 text-xs uppercase mb-1 font-medium">
                                 Style
                               </h4>
-                              <p className="text-white text-xs">
+                              <p className="text-white text-sm">
                                 {selectedImage.category[0]}
                               </p>
                             </div>
-                            <div>
-                              <h4 className="text-white/50 text-xs uppercase mb-0.5">
+                            <div className="p-2 sm:p-3 bg-white/5 border border-white rounded-lg text-center">
+                              <h4 className="text-white/50 text-xs uppercase mb-1 font-medium">
                                 Session Time
                               </h4>
-                              <p className="text-white text-xs">4-6 hours</p>
+                              <p className="text-white text-sm">4-6 hours</p>
                             </div>
-                            <div>
-                              <h4 className="text-white/50 text-xs uppercase mb-0.5">
+                            <div className="p-2 sm:p-3 bg-white/5 border border-white rounded-lg text-center">
+                              <h4 className="text-white/50 text-xs uppercase mb-1 font-medium">
                                 Placement
                               </h4>
-                              <p className="text-white text-xs">Custom</p>
+                              <p className="text-white text-sm">Custom</p>
                             </div>
-                          </div>
-                        </div>
-
-                        {/* Artist info with improved layout - more compact */}
-                        <div className="border-l border-white/10 pl-3">
-                          <h4 className="text-white/50 text-xs uppercase mb-1.5">
-                            Artist
-                          </h4>
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full bg-white/10 mr-2 overflow-hidden">
-                              <img
-                                src="/placeholder.svg?height=40&width=40"
-                                alt="Artist"
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="mt-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full text-xs py-1 text-black border-white/20 hover:bg-white hover:text-black transition-all"
-                            >
-                              Book This Artist
-                            </Button>
                           </div>
                         </div>
                       </div>
@@ -361,7 +336,6 @@ const Gallery: React.FC = () => {
   );
 };
 
-// Gallery Image Component
 const GalleryImage: React.FC<{
   item: GalleryItem;
   onClick: () => void;
