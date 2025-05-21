@@ -31,34 +31,68 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import axiosInstance from "@/lib/axios";
 
 const Contact: React.FC = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    style: "",
+    size: "medium",
+    placement: "",
+    idea: "",
+    date: null as Date | null,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const formPayload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        style: formData.style,
+        size: formData.size,
+        placement: formData.placement,
+        idea: formData.idea,
+        date: formData.date ? formData.date.toISOString() : null,
+      };
 
-    setIsSubmitting(false);
-    toast({
-      title: "Consultation Request Received",
-      description:
-        "Thank you for your inquiry. We'll get back to you within 24 hours to confirm your appointment.",
-      duration: 5000,
-    });
+      await axiosInstance.post("", formPayload);
 
-    // Reset form or show success state
-    setFormStep(1);
+      toast({
+        title: "Consultation Request Received",
+        description:
+          "Thank you for your inquiry. We'll get back to you within 24 hours to confirm your appointment.",
+        duration: 5000,
+      });
+
+      setFormStep(1);
+    } catch (error) {
+      console.error("Error submitting booking:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit booking. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section id="contact" className="py-24 bg-black relative overflow-hidden">
+    <section
+      id="contact"
+      className="pt-24 pb-6 bg-black relative overflow-hidden"
+    >
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
         <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-white/5 to-transparent"></div>
@@ -236,7 +270,7 @@ const Contact: React.FC = () => {
                     </p>
                     <Button
                       variant="outline"
-                      className="border-white/20 text-white hover:bg-white hover:text-black"
+                      className="border-white/20 text-black hover:bg-white/40 hover:text-white"
                       onClick={() => setFormStep(0)}
                     >
                       Submit Another Request
@@ -298,6 +332,7 @@ const Contact: React.FC = () => {
                             id="phone"
                             type="tel"
                             placeholder="(555) 123-4567"
+                            required
                             className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10"
                           />
                         </div>
@@ -408,6 +443,7 @@ const Contact: React.FC = () => {
                         <Input
                           id="placement"
                           placeholder="e.g., Forearm, Back, Shoulder, etc."
+                          required
                           className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10"
                         />
                       </div>
@@ -436,15 +472,21 @@ const Contact: React.FC = () => {
                           Preferred Consultation Date
                         </label>
                         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-md px-3 py-2">
-                          <Calendar className="h-5 w-5 text-white/50" />
+                          <Calendar className="h-5 w-5 text-white/50 dark:text-black/50" />
                           <DatePicker
-                            selected={selectedDate}
+                            selected={formData.date}
                             onChange={(date: Date | null) =>
-                              setSelectedDate(date)
+                              setFormData((f) => ({ ...f, date }))
                             }
                             locale={enUS}
                             placeholderText="mm/dd/yyyy"
+                            required
                             className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
+                            showTimeSelect
+                            timeFormat="HH:mm"
+                            timeIntervals={30}
+                            timeCaption="Time"
+                            dateFormat="MMMM d, yyyy h:mm aa"
                           />
                         </div>
                         <p className="text-white/50 text-xs mt-1">

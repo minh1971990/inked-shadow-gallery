@@ -183,6 +183,7 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                         id="phone"
                         type="tel"
                         placeholder="(555) 123-4567"
+                        required
                         className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black placeholder:text-white/30 dark:placeholder:text-black/30 focus:border-white/30 dark:focus:border-black/30"
                         value={formData.phone}
                         onChange={(e) =>
@@ -304,6 +305,7 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                     <Input
                       id="placement"
                       placeholder="e.g., Forearm, Back, Shoulder, etc."
+                      required
                       className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black placeholder:text-white/30 dark:placeholder:text-black/30 focus:border-white/30 dark:focus:border-black/30"
                       value={formData.placement}
                       onChange={(e) =>
@@ -351,6 +353,7 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                         }
                         locale={enUS}
                         placeholderText="mm/dd/yyyy"
+                        required
                         className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
                         showTimeSelect
                         timeFormat="HH:mm"

@@ -191,6 +191,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       id="phone"
                       type="tel"
                       placeholder="(555) 123-4567"
+                      required
                       className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10"
                       value={formData.phone}
                       onChange={(e) =>
@@ -310,6 +311,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                   <Input
                     id="placement"
                     placeholder="e.g., Forearm, Back, Shoulder, etc."
+                    required
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10"
                     value={formData.placement}
                     onChange={(e) =>
@@ -354,6 +356,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       }
                       locale={enUS}
                       placeholderText="mm/dd/yyyy"
+                      required
                       className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
                       showTimeSelect
                       timeFormat="HH:mm"
