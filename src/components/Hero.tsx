@@ -238,7 +238,7 @@ const Hero: React.FC = () => {
         >
           <div className="flex items-center gap-2">
             <FaInstagram className="text-xl" />
-            <span className="text-sm font-light">@tattoo_masters</span>
+            <span className="text-sm font-light">@art_lllex</span>
           </div>
           <div className="flex items-center gap-2">
             <PiSparkleFill className="text-xl" />
