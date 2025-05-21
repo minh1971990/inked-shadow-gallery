@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { enUS } from "date-fns/locale";
+import axiosInstance from "@/lib/axios";
 
 interface BookingFormDesktopProps {
   isOpen: boolean;
@@ -41,26 +42,68 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    style: "",
+    size: "medium",
+    placement: "",
+    idea: "",
+    date: null as Date | null,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const formPayload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        style: formData.style,
+        size: formData.size,
+        placement: formData.placement,
+        idea: formData.idea,
+        date: formData.date ? formData.date.toISOString() : null,
+      };
 
-    setIsSubmitting(false);
-    toast({
-      title: "Consultation Request Received",
-      description:
-        "Thank you for your inquiry. We'll get back to you within 24 hours to confirm your appointment.",
-      duration: 5000,
-    });
+      await axiosInstance.post("", formPayload);
 
-    setFormStep(1);
+      toast({
+        title: "Consultation Request Received",
+        description:
+          "Thank you for your inquiry. We'll get back to you within 24 hours to confirm your appointment.",
+        duration: 5000,
+      });
+
+      setFormStep(1);
+    } catch (error) {
+      console.error("Error submitting booking:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit booking. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
     setFormStep(0);
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      style: "",
+      size: "medium",
+      placement: "",
+      idea: "",
+      date: null,
+    });
     setSelectedDate(null);
     onClose();
   };
@@ -100,6 +143,10 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                         placeholder="Your name"
                         required
                         className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black placeholder:text-white/30 dark:placeholder:text-black/30 focus:border-white/30 dark:focus:border-black/30"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData((f) => ({ ...f, name: e.target.value }))
+                        }
                       />
                     </div>
 
@@ -116,6 +163,10 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                         placeholder="your.email@example.com"
                         required
                         className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black placeholder:text-white/30 dark:placeholder:text-black/30 focus:border-white/30 dark:focus:border-black/30"
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData((f) => ({ ...f, email: e.target.value }))
+                        }
                       />
                     </div>
                   </div>
@@ -133,6 +184,10 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                         type="tel"
                         placeholder="(555) 123-4567"
                         className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black placeholder:text-white/30 dark:placeholder:text-black/30 focus:border-white/30 dark:focus:border-black/30"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData((f) => ({ ...f, phone: e.target.value }))
+                        }
                       />
                     </div>
 
@@ -143,7 +198,12 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                       >
                         Preferred Style
                       </label>
-                      <Select>
+                      <Select
+                        value={formData.style}
+                        onValueChange={(v) =>
+                          setFormData((f) => ({ ...f, style: v }))
+                        }
+                      >
                         <SelectTrigger className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black">
                           <SelectValue placeholder="Select style" />
                         </SelectTrigger>
@@ -173,7 +233,10 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                       Approximate Size
                     </label>
                     <RadioGroup
-                      defaultValue="medium"
+                      value={formData.size}
+                      onValueChange={(v) =>
+                        setFormData((f) => ({ ...f, size: v }))
+                      }
                       className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
@@ -242,6 +305,13 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                       id="placement"
                       placeholder="e.g., Forearm, Back, Shoulder, etc."
                       className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black placeholder:text-white/30 dark:placeholder:text-black/30 focus:border-white/30 dark:focus:border-black/30"
+                      value={formData.placement}
+                      onChange={(e) =>
+                        setFormData((f) => ({
+                          ...f,
+                          placement: e.target.value,
+                        }))
+                      }
                     />
                   </div>
 
@@ -258,6 +328,10 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                       rows={3}
                       required
                       className="bg-white/5 dark:bg-black/5 border-white/10 dark:border-black/10 text-white dark:text-black placeholder:text-white/30 dark:placeholder:text-black/30 focus:border-white/30 dark:focus:border-black/30"
+                      value={formData.idea}
+                      onChange={(e) =>
+                        setFormData((f) => ({ ...f, idea: e.target.value }))
+                      }
                     />
                   </div>
 
@@ -271,11 +345,18 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                     <div className="flex items-center gap-2 bg-white/5 dark:bg-black/5 border border-white/10 dark:border-black/10 rounded-md px-3 py-2">
                       <Calendar className="h-5 w-5 text-white/50 dark:text-black/50" />
                       <DatePicker
-                        selected={selectedDate}
-                        onChange={(date: Date | null) => setSelectedDate(date)}
+                        selected={formData.date}
+                        onChange={(date: Date | null) =>
+                          setFormData((f) => ({ ...f, date }))
+                        }
                         locale={enUS}
                         placeholderText="mm/dd/yyyy"
                         className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
+                        showTimeSelect
+                        timeFormat="HH:mm"
+                        timeIntervals={30}
+                        timeCaption="Time"
+                        dateFormat="MMMM d, yyyy h:mm aa"
                       />
                     </div>
                     <p className="text-white/50 dark:text-black/50 text-xs mt-1">
