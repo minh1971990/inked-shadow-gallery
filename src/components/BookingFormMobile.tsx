@@ -365,7 +365,11 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       timeIntervals={30}
                       timeCaption="Time"
                       dateFormat="MMMM d, yyyy h:mm aa"
-                      filterDate={(date) => date >= addDays(new Date(), 1)}
+                      filterDate={(date) => {
+                        const tomorrow = addDays(new Date(), 1);
+                        tomorrow.setHours(0, 0, 0, 0); // reset giờ về 00:00:00
+                        return date >= tomorrow;
+                      }}
                     />
                   </div>
                   <p className="text-white/50 text-xs mt-1">
