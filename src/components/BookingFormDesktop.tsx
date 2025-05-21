@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Calendar, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { addDays } from "date-fns";
 import { enUS } from "date-fns/locale";
 import axiosInstance from "@/lib/axios";
 
@@ -346,6 +347,7 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                     </label>
                     <div className="flex items-center gap-2 bg-white/5 dark:bg-black/5 border border-white/10 dark:border-black/10 rounded-md px-3 py-2">
                       <Calendar className="h-5 w-5 text-white/50 dark:text-black/50" />
+
                       <DatePicker
                         selected={formData.date}
                         onChange={(date: Date | null) =>
@@ -360,10 +362,11 @@ export const BookingFormDesktop: React.FC<BookingFormDesktopProps> = ({
                         timeIntervals={30}
                         timeCaption="Time"
                         dateFormat="MMMM d, yyyy h:mm aa"
+                        filterDate={(date) => date >= addDays(new Date(), 1)}
                       />
                     </div>
                     <p className="text-white/50 dark:text-black/50 text-xs mt-1">
-                      Please select a date at least 3 days in advance
+                      Please select a date at least 1 day in advance
                     </p>
                   </div>
 

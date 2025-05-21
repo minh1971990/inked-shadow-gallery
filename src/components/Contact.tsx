@@ -32,6 +32,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import axiosInstance from "@/lib/axios";
+import { addDays } from "date-fns";
 
 const Contact: React.FC = () => {
   const { toast } = useToast();
@@ -487,10 +488,13 @@ const Contact: React.FC = () => {
                             timeIntervals={30}
                             timeCaption="Time"
                             dateFormat="MMMM d, yyyy h:mm aa"
+                            filterDate={(date) =>
+                              date >= addDays(new Date(), 1)
+                            }
                           />
                         </div>
                         <p className="text-white/50 text-xs mt-1">
-                          Please select a date at least 3 days in advance
+                          Please select a date at least 1 day in advance
                         </p>
                       </div>
 

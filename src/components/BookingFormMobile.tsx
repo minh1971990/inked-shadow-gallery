@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import { enUS } from "date-fns/locale";
 import axiosInstance from "@/lib/axios";
+import { addDays } from "date-fns";
 
 interface BookingFormMobileProps {
   isOpen: boolean;
@@ -349,6 +350,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                   </label>
                   <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-md px-3 py-2 h-10">
                     <Calendar className="h-4 w-4 text-white/50" />
+
                     <DatePicker
                       selected={formData.date}
                       onChange={(date: Date | null) =>
@@ -363,10 +365,11 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       timeIntervals={30}
                       timeCaption="Time"
                       dateFormat="MMMM d, yyyy h:mm aa"
+                      filterDate={(date) => date >= addDays(new Date(), 1)}
                     />
                   </div>
                   <p className="text-white/50 text-xs mt-1">
-                    Please select a date at least 3 days in advance
+                    Please select a date at least 1 day in advance
                   </p>
                 </div>
 
