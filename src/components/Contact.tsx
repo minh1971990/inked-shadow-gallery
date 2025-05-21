@@ -157,7 +157,7 @@ const Contact: React.FC = () => {
                         </h4>
                         <ul className="space-y-2 text-white/70">
                           <li className="flex justify-between">
-                            <span>Tuesday - Friday</span>
+                            <span className="me-5">Tuesday - Friday</span>
                             <span className="text-white">
                               12:00 PM - 8:00 PM
                             </span>
