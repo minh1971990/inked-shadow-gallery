@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -28,7 +26,7 @@ const BookingPolicies: React.FC = () => {
   const { openBookingForm } = useBooking();
   return (
     <section
-      id="policies"
+      id="policy"
       className="pt-16 sm:pt-24 pb-12 sm:pb-16 bg-black relative overflow-hidden"
     >
       {/* Background decorative elements */}
@@ -237,15 +235,6 @@ const BookingPolicies: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                <div className="mt-8 flex justify-center">
-                  <Button
-                    className="bg-white text-black hover:bg-white/90 rounded-full px-6 sm:px-8 py-2.5 text-sm sm:text-base w-full sm:w-auto shadow-lg shadow-white/10"
-                    onClick={openBookingForm}
-                  >
-                    Book Consultation
-                  </Button>
-                </div>
               </TabsContent>
 
               <TabsContent value="cancellation" className="mt-0">
@@ -418,7 +407,7 @@ const BookingPolicies: React.FC = () => {
           </p>
           <a
             className="flex flex-col sm:flex-row gap-4 justify-center"
-            href="#contact"
+            href="mailto:artlllex.official@gmail.com"
           >
             <Button
               variant="outline"

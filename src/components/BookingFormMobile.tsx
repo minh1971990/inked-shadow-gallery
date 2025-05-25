@@ -26,19 +26,36 @@ import DatePicker from "react-datepicker";
 import { enUS } from "date-fns/locale";
 import axiosInstance from "@/lib/axios";
 import { addDays } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCategories } from "@/hooks/use-supabase";
 
 interface BookingFormMobileProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const MOCK_CATEGORIES = [
+  { id: "black-and-grey", name: "Black & Grey" },
+  { id: "realism", name: "Realism" },
+  { id: "traditional", name: "Traditional" },
+  { id: "neo-traditional", name: "Neo-Traditional" },
+  { id: "japanese", name: "Japanese" },
+  { id: "geometric", name: "Geometric" },
+  { id: "minimalist", name: "Minimalist" },
+  { id: "portrait", name: "Portrait" },
+  { id: "other", name: "Other" },
+];
+
 export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
   isOpen,
   onClose,
 }) => {
   const { toast } = useToast();
+  const { user, userProfile } = useAuth();
+  const { categories = [] } = useCategories();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -51,8 +68,147 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
     date: null as Date | null,
   });
 
+  useEffect(() => {
+    if (user && userProfile) {
+      setFormData((prev) => ({
+        ...prev,
+        name: userProfile.full_name || "",
+        email: user.email || "",
+        phone: userProfile.phone || "",
+      }));
+    }
+  }, [user, userProfile]);
+
+  const validateField = (name: string, value: string | Date | null) => {
+    const newErrors = { ...errors };
+    delete newErrors[name];
+
+    switch (name) {
+      case "name":
+        if (!value.toString().trim()) {
+          newErrors.name = "Name is required";
+        }
+        break;
+      case "email":
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value) {
+          newErrors.email = "Email is required";
+        } else if (!emailRegex.test(value.toString())) {
+          newErrors.email = "Please enter a valid email address";
+        }
+        break;
+      case "phone":
+        const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+        if (!value) {
+          newErrors.phone = "Phone number is required";
+        } else if (!phoneRegex.test(value.toString())) {
+          newErrors.phone =
+            "Please enter a valid phone number (e.g., 123-456-7890)";
+        }
+        break;
+      case "style":
+        if (!value) {
+          newErrors.style = "Please select a tattoo style";
+        }
+        break;
+      case "placement":
+        if (!value.toString().trim()) {
+          newErrors.placement = "Placement is required";
+        }
+        break;
+      case "idea":
+        if (!value.toString().trim()) {
+          newErrors.idea = "Please describe your tattoo idea";
+        } else if (value.toString().length < 10) {
+          newErrors.idea = "Description must be at least 10 characters";
+        }
+        break;
+      case "date":
+        if (!value) {
+          newErrors.date = "Please select a consultation date";
+        } else {
+          const tomorrow = addDays(new Date(), 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          if (value < tomorrow) {
+            newErrors.date = "Please select a date at least 1 day in advance";
+          }
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Phone validation
+    const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+    if (!formData.phone) {
+      newErrors.phone = "Phone number is required";
+    } else if (!phoneRegex.test(formData.phone)) {
+      newErrors.phone =
+        "Please enter a valid phone number (e.g., 123-456-7890)";
+    }
+
+    // Style validation
+    if (!formData.style) {
+      newErrors.style = "Please select a tattoo style";
+    }
+
+    // Placement validation
+    if (!formData.placement.trim()) {
+      newErrors.placement = "Placement is required";
+    }
+
+    // Idea validation
+    if (!formData.idea.trim()) {
+      newErrors.idea = "Please describe your tattoo idea";
+    } else if (formData.idea.length < 10) {
+      newErrors.idea = "Description must be at least 10 characters";
+    }
+
+    // Date validation
+    if (!formData.date) {
+      newErrors.date = "Please select a consultation date";
+    } else {
+      const tomorrow = addDays(new Date(), 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      if (formData.date < tomorrow) {
+        newErrors.date = "Please select a date at least 1 day in advance";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please check all required fields and try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -93,9 +249,9 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
   const resetForm = () => {
     setFormStep(0);
     setFormData({
-      name: "",
-      email: "",
-      phone: "",
+      name: userProfile?.full_name || "",
+      email: user?.email || "",
+      phone: userProfile?.phone || "",
       style: "",
       size: "medium",
       placement: "",
@@ -150,13 +306,19 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                     <Input
                       id="name"
                       placeholder="Your name"
-                      required
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10"
                       value={formData.name}
-                      onChange={(e) =>
-                        setFormData((f) => ({ ...f, name: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData((f) => ({ ...f, name: value }));
+                        validateField("name", value);
+                      }}
+                      className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                        errors.name ? "border-red-500" : ""
+                      }`}
                     />
+                    {errors.name && (
+                      <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                    )}
                   </div>
 
                   <div>
@@ -170,13 +332,21 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       id="email"
                       type="email"
                       placeholder="your.email@example.com"
-                      required
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10"
                       value={formData.email}
-                      onChange={(e) =>
-                        setFormData((f) => ({ ...f, email: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData((f) => ({ ...f, email: value }));
+                        validateField("email", value);
+                      }}
+                      className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                        errors.email ? "border-red-500" : ""
+                      }`}
                     />
+                    {errors.email && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -192,13 +362,21 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       id="phone"
                       type="tel"
                       placeholder="(555) 123-4567"
-                      required
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10"
                       value={formData.phone}
-                      onChange={(e) =>
-                        setFormData((f) => ({ ...f, phone: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData((f) => ({ ...f, phone: value }));
+                        validateField("phone", value);
+                      }}
+                      className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                        errors.phone ? "border-red-500" : ""
+                      }`}
                     />
+                    {errors.phone && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.phone}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -209,30 +387,53 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       Preferred Style
                     </label>
                     <Select
-                      value={formData.style}
-                      onValueChange={(v) =>
-                        setFormData((f) => ({ ...f, style: v }))
-                      }
+                      onValueChange={(value) => {
+                        const selectedCategory = categories.find(
+                          (cat) => String(cat.id) === value
+                        );
+                        const styleName = selectedCategory?.name || "";
+                        setFormData((f) => ({
+                          ...f,
+                          style: styleName,
+                        }));
+                        validateField("style", styleName);
+                      }}
                     >
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white h-10">
-                        <SelectValue placeholder="Select style" />
+                      <SelectTrigger
+                        className={`bg-white/5 border-white/10 text-white h-10 ${
+                          errors.style ? "border-red-500" : ""
+                        }`}
+                      >
+                        <SelectValue
+                          placeholder={
+                            categories.length === 0
+                              ? "Loading styles..."
+                              : "Select style"
+                          }
+                        />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[200px]">
-                        <SelectItem value="black-and-grey">
-                          Black & Grey
-                        </SelectItem>
-                        <SelectItem value="realism">Realism</SelectItem>
-                        <SelectItem value="traditional">Traditional</SelectItem>
-                        <SelectItem value="neo-traditional">
-                          Neo-Traditional
-                        </SelectItem>
-                        <SelectItem value="japanese">Japanese</SelectItem>
-                        <SelectItem value="geometric">Geometric</SelectItem>
-                        <SelectItem value="minimalist">Minimalist</SelectItem>
-                        <SelectItem value="portrait">Portrait</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                      <SelectContent>
+                        {categories.length === 0 ? (
+                          <div className="flex items-center justify-center p-4">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : (
+                          categories.map((category) => (
+                            <SelectItem
+                              key={category.id}
+                              value={String(category.id)}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
+                    {errors.style && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.style}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -312,13 +513,21 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                   <Input
                     id="placement"
                     placeholder="e.g., Forearm, Back, Shoulder, etc."
-                    required
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10"
                     value={formData.placement}
-                    onChange={(e) =>
-                      setFormData((f) => ({ ...f, placement: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData((f) => ({ ...f, placement: value }));
+                      validateField("placement", value);
+                    }}
+                    className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                      errors.placement ? "border-red-500" : ""
+                    }`}
                   />
+                  {errors.placement && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.placement}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -332,13 +541,19 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                     id="tattoo-idea"
                     placeholder="Please describe your tattoo idea in detail..."
                     rows={3}
-                    required
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 min-h-[80px]"
                     value={formData.idea}
-                    onChange={(e) =>
-                      setFormData((f) => ({ ...f, idea: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData((f) => ({ ...f, idea: value }));
+                      validateField("idea", value);
+                    }}
+                    className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 min-h-[80px] ${
+                      errors.idea ? "border-red-500" : ""
+                    }`}
                   />
+                  {errors.idea && (
+                    <p className="text-red-500 text-xs mt-1">{errors.idea}</p>
+                  )}
                 </div>
 
                 <div>
@@ -353,9 +568,10 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
 
                     <DatePicker
                       selected={formData.date}
-                      onChange={(date: Date | null) =>
-                        setFormData((f) => ({ ...f, date }))
-                      }
+                      onChange={(date: Date | null) => {
+                        setFormData((f) => ({ ...f, date }));
+                        validateField("date", date);
+                      }}
                       locale={enUS}
                       placeholderText="mm/dd/yyyy"
                       required
@@ -367,7 +583,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       dateFormat="MMMM d, yyyy h:mm aa"
                       filterDate={(date) => {
                         const tomorrow = addDays(new Date(), 1);
-                        tomorrow.setHours(0, 0, 0, 0); // reset giờ về 00:00:00
+                        tomorrow.setHours(0, 0, 0, 0);
                         return date >= tomorrow;
                       }}
                     />

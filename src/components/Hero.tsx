@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -7,11 +5,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaRegImages, FaRegCalendarCheck, FaInstagram } from "react-icons/fa";
 import { PiSparkleFill } from "react-icons/pi";
 import { useBooking } from "./BookingContent";
+import { useDesigns } from "@/hooks/use-supabase";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Hero: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const { openBookingForm } = useBooking();
+  const { designs, featuredDesigns } = useDesigns();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +38,19 @@ const Hero: React.FC = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  const handleBookingClick = () => {
+    if (!user) {
+      setShowLoginDialog(true);
+    } else {
+      openBookingForm();
+    }
+  };
+
+  const handleLogin = () => {
+    setShowLoginDialog(false);
+    navigate("/login");
+  };
 
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-black">
@@ -152,7 +178,7 @@ const Hero: React.FC = () => {
               variant="outline"
               className="text-lg py-6 px-8 rounded-full font-semibold flex items-center justify-center gap-2 text-black border-white hover:bg-white/20 hover:text-white transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] shadow-lg w-full"
               size="lg"
-              onClick={openBookingForm}
+              onClick={handleBookingClick}
             >
               <FaRegCalendarCheck className="text-xl" />
               Booking
@@ -206,9 +232,9 @@ const Hero: React.FC = () => {
           <div className="relative">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-white/5 via-white/20 to-white/5 rounded-xl blur opacity-50"></div>
             <div className="grid grid-cols-3 gap-2 sm:gap-4 relative bg-black/40 p-2 sm:p-4 rounded-xl backdrop-blur-sm border border-white/10">
-              {[1, 2, 3].map((i) => (
+              {featuredDesigns.slice(0, 3).map((featured) => (
                 <motion.div
-                  key={i}
+                  key={featured.id}
                   className="aspect-square overflow-hidden rounded-lg relative group"
                   whileHover={{ scale: 1.03 }}
                   transition={{ duration: 0.2 }}
@@ -219,8 +245,13 @@ const Hero: React.FC = () => {
                     </span>
                   </div>
                   <img
-                    src={`/placeholder.svg?height=400&width=400`}
-                    alt={`Featured tattoo work ${i}`}
+                    src={
+                      featured.image_url ||
+                      "/placeholder.svg?height=400&width=400"
+                    }
+                    alt={`Featured tattoo work ${
+                      featured.title || featured.id
+                    }`}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </motion.div>
@@ -246,6 +277,34 @@ const Hero: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Login Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="bg-black/95 border border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Login Required</DialogTitle>
+            <DialogDescription className="text-white/70">
+              Please login to book an appointment
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLoginDialog(false)}
+              className="border-white/10 text-black hover:bg-white/30 hover:text-white  "
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleLogin}
+              className="border-white/10 text-black hover:bg-white/30 hover:text-white  "
+            >
+              Login
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

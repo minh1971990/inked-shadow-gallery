@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +19,7 @@ import {
   Calendar,
   CheckCircle2,
   Loader2,
+  Shield,
 } from "lucide-react";
 import {
   Select,
@@ -33,12 +32,30 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import axiosInstance from "@/lib/axios";
 import { addDays } from "date-fns";
+import { useCategories } from "@/hooks/use-supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+
+const MOCK_CATEGORIES = [
+  { id: "black-and-grey", name: "Black & Grey" },
+  { id: "realism", name: "Realism" },
+  { id: "traditional", name: "Traditional" },
+  { id: "neo-traditional", name: "Neo-Traditional" },
+  { id: "japanese", name: "Japanese" },
+  { id: "geometric", name: "Geometric" },
+  { id: "minimalist", name: "Minimalist" },
+  { id: "portrait", name: "Portrait" },
+  { id: "other", name: "Other" },
+];
 
 const Contact: React.FC = () => {
   const { toast } = useToast();
+  const { categories = [] } = useCategories();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -50,8 +67,136 @@ const Contact: React.FC = () => {
     date: null as Date | null,
   });
 
+  const validateField = (name: string, value: string | Date | null) => {
+    const newErrors = { ...errors };
+    delete newErrors[name];
+
+    switch (name) {
+      case "name":
+        if (!value.toString().trim()) {
+          newErrors.name = "Name is required";
+        }
+        break;
+      case "email":
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value) {
+          newErrors.email = "Email is required";
+        } else if (!emailRegex.test(value.toString())) {
+          newErrors.email = "Please enter a valid email address";
+        }
+        break;
+      case "phone":
+        const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+        if (!value) {
+          newErrors.phone = "Phone number is required";
+        } else if (!phoneRegex.test(value.toString())) {
+          newErrors.phone =
+            "Please enter a valid phone number (e.g., 123-456-7890)";
+        }
+        break;
+      case "style":
+        if (!value) {
+          newErrors.style = "Please select a tattoo style";
+        }
+        break;
+      case "placement":
+        if (!value.toString().trim()) {
+          newErrors.placement = "Placement is required";
+        }
+        break;
+      case "idea":
+        if (!value.toString().trim()) {
+          newErrors.idea = "Please describe your tattoo idea";
+        } else if (value.toString().length < 10) {
+          newErrors.idea = "Description must be at least 10 characters";
+        }
+        break;
+      case "date":
+        if (!value) {
+          newErrors.date = "Please select a consultation date";
+        } else {
+          const tomorrow = addDays(new Date(), 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          if (value < tomorrow) {
+            newErrors.date = "Please select a date at least 1 day in advance";
+          }
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Phone validation
+    const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+    if (!formData.phone) {
+      newErrors.phone = "Phone number is required";
+    } else if (!phoneRegex.test(formData.phone)) {
+      newErrors.phone =
+        "Please enter a valid phone number (e.g., 123-456-7890)";
+    }
+
+    // Style validation
+    if (!formData.style) {
+      newErrors.style = "Please select a tattoo style";
+    }
+
+    // Placement validation
+    if (!formData.placement.trim()) {
+      newErrors.placement = "Placement is required";
+    }
+
+    // Idea validation
+    if (!formData.idea.trim()) {
+      newErrors.idea = "Please describe your tattoo idea";
+    } else if (formData.idea.length < 10) {
+      newErrors.idea = "Description must be at least 10 characters";
+    }
+
+    // Date validation
+    if (!formData.date) {
+      newErrors.date = "Please select a consultation date";
+    } else {
+      const tomorrow = addDays(new Date(), 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      if (formData.date < tomorrow) {
+        newErrors.date = "Please select a date at least 1 day in advance";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please check all required fields and try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -89,11 +234,27 @@ const Contact: React.FC = () => {
     }
   };
 
+  const resetForm = () => {
+    setFormStep(0);
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      style: "",
+      size: "medium",
+      placement: "",
+      idea: "",
+      date: null,
+    });
+    setErrors({});
+  };
+
+  const handleLogin = () => {
+    navigate("/login");
+  };
+
   return (
-    <section
-      id="contact"
-      className="pt-24 pb-6 bg-black relative overflow-hidden"
-    >
+    <section id="contact" className="pt-24 bg-black relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
         <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-white/5 to-transparent"></div>
@@ -272,7 +433,7 @@ const Contact: React.FC = () => {
                     <Button
                       variant="outline"
                       className="border-white/20 text-black hover:bg-white/40 hover:text-white"
-                      onClick={() => setFormStep(0)}
+                      onClick={resetForm}
                     >
                       Submit Another Request
                     </Button>
@@ -287,234 +448,333 @@ const Contact: React.FC = () => {
                       <div className="w-12 h-[2px] bg-gradient-to-r from-white/80 to-white/20"></div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label
-                            htmlFor="name"
-                            className="block text-white/80 text-sm font-medium mb-2"
-                          >
-                            Full Name
-                          </label>
-                          <Input
-                            id="name"
-                            placeholder="Your name"
-                            required
-                            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10"
-                          />
+                    {!user ? (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
+                          <Shield className="w-8 h-8 text-white" />
                         </div>
-
-                        <div>
-                          <label
-                            htmlFor="email"
-                            className="block text-white/80 text-sm font-medium mb-2"
-                          >
-                            Email Address
-                          </label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="your.email@example.com"
-                            required
-                            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label
-                            htmlFor="phone"
-                            className="block text-white/80 text-sm font-medium mb-2"
-                          >
-                            Phone Number
-                          </label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            placeholder="(555) 123-4567"
-                            required
-                            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10"
-                          />
-                        </div>
-
-                        <div>
-                          <label
-                            htmlFor="tattoo-style"
-                            className="block text-white/80 text-sm font-medium mb-2"
-                          >
-                            Preferred Style
-                          </label>
-                          <Select>
-                            <SelectTrigger className="bg-white/5 border-white/10 text-white focus:ring-white/10">
-                              <SelectValue placeholder="Select style" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="black-and-grey">
-                                Black & Grey
-                              </SelectItem>
-                              <SelectItem value="realism">Realism</SelectItem>
-                              <SelectItem value="traditional">
-                                Traditional
-                              </SelectItem>
-                              <SelectItem value="neo-traditional">
-                                Neo-Traditional
-                              </SelectItem>
-                              <SelectItem value="japanese">Japanese</SelectItem>
-                              <SelectItem value="geometric">
-                                Geometric
-                              </SelectItem>
-                              <SelectItem value="minimalist">
-                                Minimalist
-                              </SelectItem>
-                              <SelectItem value="portrait">Portrait</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-white/80 text-sm font-medium mb-2">
-                          Approximate Size
-                        </label>
-                        <RadioGroup
-                          defaultValue="medium"
-                          className="flex flex-wrap gap-4"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="small"
-                              id="size-small"
-                              className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
-                            />
-                            <Label
-                              htmlFor="size-small"
-                              className="text-white/80"
-                            >
-                              Small (2-3")
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="medium"
-                              id="size-medium"
-                              className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
-                            />
-                            <Label
-                              htmlFor="size-medium"
-                              className="text-white/80"
-                            >
-                              Medium (4-6")
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="large"
-                              id="size-large"
-                              className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
-                            />
-                            <Label
-                              htmlFor="size-large"
-                              className="text-white/80"
-                            >
-                              Large (7-10")
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="extra-large"
-                              id="size-xl"
-                              className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
-                            />
-                            <Label htmlFor="size-xl" className="text-white/80">
-                              Extra Large (11"+)
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="placement"
-                          className="block text-white/80 text-sm font-medium mb-2"
-                        >
-                          Desired Placement
-                        </label>
-                        <Input
-                          id="placement"
-                          placeholder="e.g., Forearm, Back, Shoulder, etc."
-                          required
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="tattoo-idea"
-                          className="block text-white/80 text-sm font-medium mb-2"
-                        >
-                          Tattoo Description
-                        </label>
-                        <Textarea
-                          id="tattoo-idea"
-                          placeholder="Please describe your tattoo idea in detail. Include any reference images or specific elements you'd like to incorporate."
-                          rows={4}
-                          required
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="availability"
-                          className="block text-white/80 text-sm font-medium mb-2"
-                        >
-                          Preferred Consultation Date
-                        </label>
-                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-md px-3 py-2">
-                          <Calendar className="h-5 w-5 text-white/50 dark:text-black/50" />
-                          <DatePicker
-                            selected={formData.date}
-                            onChange={(date: Date | null) =>
-                              setFormData((f) => ({ ...f, date }))
-                            }
-                            locale={enUS}
-                            placeholderText="mm/dd/yyyy"
-                            required
-                            className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
-                            showTimeSelect
-                            timeFormat="HH:mm"
-                            timeIntervals={30}
-                            timeCaption="Time"
-                            dateFormat="MMMM d, yyyy h:mm aa"
-                            filterDate={(date) => {
-                              const tomorrow = addDays(new Date(), 1);
-                              tomorrow.setHours(0, 0, 0, 0); // reset giờ về 00:00:00
-                              return date >= tomorrow;
-                            }}
-                          />
-                        </div>
-                        <p className="text-white/50 text-xs mt-1">
-                          Please select a date at least 1 day in advance
+                        <h3 className="text-2xl font-bold text-white mb-3">
+                          Secure Consultation
+                        </h3>
+                        <p className="text-white/70 max-w-md mb-8">
+                          Please login to request a consultation. This helps us
+                          maintain the security and privacy of your personal
+                          information.
                         </p>
+                        <Button
+                          onClick={handleLogin}
+                          className="bg-white text-black hover:bg-white/90 rounded-full px-8 py-6 text-lg font-medium"
+                        >
+                          Login to Continue
+                        </Button>
                       </div>
+                    ) : (
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label
+                              htmlFor="name"
+                              className="block text-white/80 text-sm font-medium mb-2"
+                            >
+                              Full Name
+                            </label>
+                            <Input
+                              id="name"
+                              placeholder="Your name"
+                              value={formData.name}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setFormData({ ...formData, name: value });
+                                validateField("name", value);
+                              }}
+                              className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                                errors.name ? "border-red-500" : ""
+                              }`}
+                            />
+                            {errors.name && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors.name}
+                              </p>
+                            )}
+                          </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full bg-white text-black hover:bg-white/90 transition-all py-6 text-lg font-medium"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          "Book Your Consultation"
-                        )}
-                      </Button>
-                    </form>
+                          <div>
+                            <label
+                              htmlFor="email"
+                              className="block text-white/80 text-sm font-medium mb-2"
+                            >
+                              Email Address
+                            </label>
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="your.email@example.com"
+                              value={formData.email}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setFormData({ ...formData, email: value });
+                                validateField("email", value);
+                              }}
+                              className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                                errors.email ? "border-red-500" : ""
+                              }`}
+                            />
+                            {errors.email && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors.email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label
+                              htmlFor="phone"
+                              className="block text-white/80 text-sm font-medium mb-2"
+                            >
+                              Phone Number
+                            </label>
+                            <Input
+                              id="phone"
+                              type="tel"
+                              placeholder="(555) 123-4567"
+                              value={formData.phone}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setFormData({ ...formData, phone: value });
+                                validateField("phone", value);
+                              }}
+                              className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                                errors.phone ? "border-red-500" : ""
+                              }`}
+                            />
+                            {errors.phone && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors.phone}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="tattoo-style"
+                              className="block text-white/80 text-sm font-medium mb-2"
+                            >
+                              Preferred Style
+                            </label>
+                            <Select
+                              onValueChange={(value) => {
+                                const selectedCategory = categories.find(
+                                  (cat) => String(cat.id) === value
+                                );
+                                const styleName = selectedCategory?.name || "";
+                                setFormData({
+                                  ...formData,
+                                  style: styleName,
+                                });
+                                validateField("style", styleName);
+                              }}
+                            >
+                              <SelectTrigger
+                                className={`bg-white/5 border-white/10 text-white focus:ring-white/10 ${
+                                  errors.style ? "border-red-500" : ""
+                                }`}
+                              >
+                                <SelectValue placeholder="Select style" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.map((category) => (
+                                  <SelectItem
+                                    key={category.id}
+                                    value={String(category.id)}
+                                  >
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-white/80 text-sm font-medium mb-2">
+                            Approximate Size
+                          </label>
+                          <RadioGroup
+                            defaultValue="medium"
+                            className="flex flex-wrap gap-4"
+                            onValueChange={(value) =>
+                              setFormData({ ...formData, size: value })
+                            }
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="small"
+                                id="size-small"
+                                className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
+                              />
+                              <Label
+                                htmlFor="size-small"
+                                className="text-white/80"
+                              >
+                                Small (2-3")
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="medium"
+                                id="size-medium"
+                                className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
+                              />
+                              <Label
+                                htmlFor="size-medium"
+                                className="text-white/80"
+                              >
+                                Medium (4-6")
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="large"
+                                id="size-large"
+                                className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
+                              />
+                              <Label
+                                htmlFor="size-large"
+                                className="text-white/80"
+                              >
+                                Large (7-10")
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="extra-large"
+                                id="size-xl"
+                                className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
+                              />
+                              <Label
+                                htmlFor="size-xl"
+                                className="text-white/80"
+                              >
+                                Extra Large (11"+)
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="placement"
+                            className="block text-white/80 text-sm font-medium mb-2"
+                          >
+                            Desired Placement
+                          </label>
+                          <Input
+                            id="placement"
+                            placeholder="e.g., Forearm, Back, Shoulder, etc."
+                            value={formData.placement}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, placement: value });
+                              validateField("placement", value);
+                            }}
+                            className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                              errors.placement ? "border-red-500" : ""
+                            }`}
+                          />
+                          {errors.placement && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.placement}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="tattoo-idea"
+                            className="block text-white/80 text-sm font-medium mb-2"
+                          >
+                            Tattoo Description
+                          </label>
+                          <Textarea
+                            id="tattoo-idea"
+                            placeholder="Please describe your tattoo idea in detail. Include any reference images or specific elements you'd like to incorporate."
+                            rows={4}
+                            value={formData.idea}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormData({ ...formData, idea: value });
+                              validateField("idea", value);
+                            }}
+                            className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                              errors.idea ? "border-red-500" : ""
+                            }`}
+                          />
+                          {errors.idea && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.idea}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="availability"
+                            className="block text-white/80 text-sm font-medium mb-2"
+                          >
+                            Preferred Consultation Date
+                          </label>
+                          <div
+                            className={`flex items-center gap-2 bg-white/5 border ${
+                              errors.date ? "border-red-500" : "border-white/10"
+                            } rounded-md px-3 py-2`}
+                          >
+                            <Calendar className="h-5 w-5 text-white/50 dark:text-black/50" />
+                            <DatePicker
+                              selected={formData.date}
+                              onChange={(date: Date | null) => {
+                                setFormData((f) => ({ ...f, date }));
+                                validateField("date", date);
+                              }}
+                              locale={enUS}
+                              placeholderText="mm/dd/yyyy"
+                              className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
+                              showTimeSelect
+                              timeFormat="HH:mm"
+                              timeIntervals={30}
+                              timeCaption="Time"
+                              dateFormat="MMMM d, yyyy h:mm aa"
+                              filterDate={(date) => {
+                                const tomorrow = addDays(new Date(), 1);
+                                tomorrow.setHours(0, 0, 0, 0);
+                                return date >= tomorrow;
+                              }}
+                            />
+                          </div>
+                          {errors.date && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.date}
+                            </p>
+                          )}
+                        </div>
+
+                        <Button
+                          type="submit"
+                          className="w-full bg-white text-black hover:bg-white/90 transition-all py-6 text-lg font-medium"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            "Book Your Consultation"
+                          )}
+                        </Button>
+                      </form>
+                    )}
                   </>
                 )}
               </div>

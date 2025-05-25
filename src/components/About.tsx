@@ -1,11 +1,39 @@
-"use client";
-
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Award, Star, Clock, Users, ChevronRight, Info } from "lucide-react";
+import { useBooking } from "./BookingContent";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState } from "react";
 
 const About: React.FC = () => {
+  const { openBookingForm } = useBooking();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+
+  const handleBookingClick = () => {
+    if (!user) {
+      setShowLoginDialog(true);
+    } else {
+      openBookingForm();
+    }
+  };
+
+  const handleLogin = () => {
+    setShowLoginDialog(false);
+    navigate("/login");
+  };
+
   return (
     <section id="about" className="py-24 bg-black relative overflow-hidden">
       {/* Background decorative elements */}
@@ -171,8 +199,11 @@ const About: React.FC = () => {
                 </p>
                 <p className="text-white/70 text-end pr-7">Regards, Alex.</p>
                 <div className="pt-4">
-                  <Button className="bg-white text-black hover:bg-white/90 rounded-full px-6 group">
-                    Read Full Bio
+                  <Button
+                    className="bg-white text-black hover:bg-white/90 rounded-full px-6 group"
+                    onClick={handleBookingClick}
+                  >
+                    BOOK NOW
                     <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </div>
@@ -181,6 +212,34 @@ const About: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Login Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="bg-black/95 border border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Login Required</DialogTitle>
+            <DialogDescription className="text-white/70">
+              Please login to book an appointment
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLoginDialog(false)}
+              className="border-white/10 text-black hover:bg-white/30 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleLogin}
+              className="border-white/10 text-black hover:bg-white/30 hover:text-white"
+            >
+              Login
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

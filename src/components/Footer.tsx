@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -27,7 +25,6 @@ const Footer: React.FC = () => {
     if (email) {
       setIsSubscribed(true);
       setEmail("");
-      // Here you would typically send the email to your newsletter service
     }
   };
 

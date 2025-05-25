@@ -13,13 +13,18 @@ import {
 } from "lucide-react";
 import { galleryData, categories, type GalleryItem } from "@/lib/gallery-data";
 
+import { useCategories, useDesigns } from "@/hooks/use-supabase";
+
 const Gallery: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const galleryRef = useRef<HTMLDivElement>(null);
+
+  const { categories = [] } = useCategories();
+  const { designs = [] } = useDesigns();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -27,12 +32,15 @@ const Gallery: React.FC = () => {
 
   const filteredImages =
     selectedCategory === "All"
-      ? galleryData
-      : galleryData.filter((item) =>
-          item.category.includes(selectedCategory.toLowerCase())
-        );
+      ? designs
+      : designs?.filter((design) =>
+          design.design_categories?.some(
+            (dc) =>
+              dc.category?.name.toLowerCase() === selectedCategory.toLowerCase()
+          )
+        ) || [];
 
-  const handleImageClick = (image: GalleryItem) => {
+  const handleImageClick = (image: any) => {
     const index = filteredImages.findIndex((item) => item.id === image.id);
     setSelectedImage(image);
     setSelectedIndex(index);
@@ -110,23 +118,42 @@ const Gallery: React.FC = () => {
           animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          {categories.map((category, index) => (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Button
+              variant={selectedCategory === "All" ? "default" : "outline"}
+              className={`text-sm rounded-full px-6 py-2 transition-all duration-300 ${
+                selectedCategory === "All"
+                  ? "bg-white text-black hover:bg-white/90"
+                  : "text-black capitalize border-white/20 hover:border-white/50 hover:bg-white/10 hover:text-white"
+              }`}
+              onClick={() => setSelectedCategory("All")}
+            >
+              All
+            </Button>
+          </motion.div>
+          {categories?.map((category, index) => (
             <motion.div
-              key={category}
+              key={category.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
             >
               <Button
-                variant={selectedCategory === category ? "default" : "outline"}
+                variant={
+                  selectedCategory === category.name ? "default" : "outline"
+                }
                 className={`text-sm rounded-full px-6 py-2 transition-all duration-300 ${
-                  selectedCategory === category
+                  selectedCategory === category.name
                     ? "bg-white text-black hover:bg-white/90"
                     : "text-black capitalize border-white/20 hover:border-white/50 hover:bg-white/10 hover:text-white"
                 }`}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => setSelectedCategory(category.name)}
               >
-                {category}
+                {category.name}
               </Button>
             </motion.div>
           ))}
@@ -143,10 +170,19 @@ const Gallery: React.FC = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
-              {filteredImages.map((item, index) => (
+              {filteredImages?.map((item, index) => (
                 <GalleryImage
                   key={item.id}
-                  item={item}
+                  item={{
+                    id: item.id,
+                    title: item.title,
+                    description: item.description || "",
+                    imageUrl: item.image_url || "/placeholder.svg",
+                    category:
+                      item.design_categories?.map(
+                        (dc) => dc.category?.name || ""
+                      ) || [],
+                  }}
                   onClick={() => handleImageClick(item)}
                   index={index}
                   isLoaded={isLoaded}
@@ -184,7 +220,6 @@ const Gallery: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Image Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-4xl bg-black/95 p-0 border border-white/10 rounded-lg overflow-hidden backdrop-blur-xl h-[90vh] flex flex-col">
             <button
@@ -196,8 +231,8 @@ const Gallery: React.FC = () => {
             </button>
             {selectedImage && (
               <div className="relative flex flex-col h-full">
-                {/* Navigation buttons with improved positioning */}
-                <div className="absolute inset-y-0 bottom-20 left-0 flex items-center z-20 px-1 sm:px-2">
+                {/* Navigation buttons */}
+                <div className="absolute inset-y-0 left-0 flex items-center z-20 px-1 sm:px-2">
                   <button
                     className={`p-1 sm:p-2 bg-white/20 rounded-full text-white/70 hover:text-white hover:bg-white/50 transition-all ${
                       selectedIndex <= 0
@@ -211,7 +246,7 @@ const Gallery: React.FC = () => {
                     <ChevronLeft size={18} className="pointer-events-none" />
                   </button>
                 </div>
-                <div className="absolute inset-y-0 bottom-20 right-0 flex items-center z-20 px-1 sm:px-2">
+                <div className="absolute inset-y-0 right-0 flex items-center z-20 px-1 sm:px-2">
                   <button
                     className={`p-1.5 sm:p-2 bg-white/20 rounded-full text-white/70 hover:text-white hover:bg-white/50 transition-all ${
                       selectedIndex >= filteredImages.length - 1
@@ -241,9 +276,9 @@ const Gallery: React.FC = () => {
                       <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                         <div className="w-[85%] sm:w-[400px] md:w-[500px] h-[200px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-lg relative group">
                           <motion.img
-                            src={selectedImage.imageUrl || "/placeholder.svg"}
+                            src={selectedImage.image_url || "/placeholder.svg"}
                             alt={selectedImage.title}
-                            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                            className="w-full h-full object-contain transition-transform duration-700"
                             initial={{ scale: 0.95 }}
                             animate={{ scale: 1 }}
                             transition={{ duration: 0.4 }}
@@ -263,16 +298,16 @@ const Gallery: React.FC = () => {
                             </span>
                             <div className="w-6 sm:w-8 h-[1px] bg-gradient-to-l from-transparent to-white/70"></div>
                           </div>
-                          <h3 className="text-white text-lg sm:text-xl font-semibold mb-2">
+                          <h3 className="text-white text-lg sm:text-xl font-semibold mb-2 mt-14">
                             {selectedImage.title}
                           </h3>
                           <div className="flex flex-wrap justify-center gap-2">
-                            {selectedImage.category.map((cat) => (
+                            {selectedImage.design_categories?.map((dc: any) => (
                               <span
-                                key={cat}
-                                className="px-2 py-0.5 bg-white/10 rounded-full text-white/80 text-xs"
+                                key={dc.category?.id}
+                                className="px-2 py-0.5 SESSION bg-white/10 rounded-full text-white/80 text-xs"
                               >
-                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                {dc.category?.name}
                               </span>
                             ))}
                           </div>
@@ -303,17 +338,17 @@ const Gallery: React.FC = () => {
                           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-2xl mx-auto">
                             <div className="p-2 sm:p-3 bg-white/5 border border-white rounded-lg text-center">
                               <h4 className="text-white/50 text-xs uppercase mb-1 font-medium">
-                                Style
+                                Artist
                               </h4>
-                              <p className="text-white text-sm">
-                                {selectedImage.category[0]}
-                              </p>
+                              <p className="text-white text-sm">@art_lllex</p>
                             </div>
                             <div className="p-2 sm:p-3 bg-white/5 border border-white rounded-lg text-center">
                               <h4 className="text-white/50 text-xs uppercase mb-1 font-medium">
                                 Session Time
                               </h4>
-                              <p className="text-white text-sm">4-6 hours</p>
+                              <p className="text-white text-sm">
+                                1 - 1.5 hours
+                              </p>
                             </div>
                             <div className="p-2 sm:p-3 bg-white/5 border border-white rounded-lg text-center">
                               <h4 className="text-white/50 text-xs uppercase mb-1 font-medium">
