@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5678/webhook/27988c11-8567-42d0-9bd4-c6892bc323a4",
+  baseURL:
+    "https://positive-salmon-privately.ngrok-free.app/webhook/27988c11-8567-42d0-9bd4-c6892bc323a4",
   headers: {
     "Content-Type": "application/json",
   },
