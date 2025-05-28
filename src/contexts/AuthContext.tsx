@@ -40,6 +40,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   checkBookingRespond: Booking | null;
+  refetchBookingRespond: () => void;
   loading: boolean;
   userProfile: Profile | null;
   profileLoading: boolean;
@@ -199,6 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     data: checkBookingRespond,
     isLoading: bookingLoading,
     error: bookingError,
+    refetch: refetchBookingRespond, // thêm dòng này
   } = useQuery({
     queryKey: ["check-booking-respond", userProfile?.email],
     enabled: !!userProfile?.email,
@@ -285,6 +287,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signOut,
         resetPassword,
         checkBookingRespond,
+        refetchBookingRespond,
         loading,
         userProfile,
         profileLoading,

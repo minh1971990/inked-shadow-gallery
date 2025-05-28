@@ -42,7 +42,8 @@ const Contact: React.FC = () => {
   const { toast } = useToast();
   const { categories = [] } = useCategories();
   const { bookings = [] } = useBookings();
-  const { user, userProfile, checkBookingRespond } = useAuth();
+  const { user, userProfile, checkBookingRespond, refetchBookingRespond } =
+    useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
@@ -293,6 +294,10 @@ const Contact: React.FC = () => {
         date: localDateStr,
       };
       await axiosInstance.post("", formPayload);
+
+      if (typeof refetchBookingRespond === "function") {
+        await refetchBookingRespond();
+      }
 
       toast({
         title: "Consultation Request Received",

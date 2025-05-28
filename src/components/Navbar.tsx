@@ -77,14 +77,6 @@ const DesktopMenu = ({
   const { user, signOut, loading, userProfile, profileLoading } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Đăng xuất thất bại:", error);
-    }
-  };
-
   const renderNavLinks = () => (
     <div className="flex items-center space-x-8 mr-8">
       {navLinks.map((link) => (

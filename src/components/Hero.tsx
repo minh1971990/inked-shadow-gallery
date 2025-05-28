@@ -30,7 +30,7 @@ const Hero: React.FC = () => {
   const { openBookingForm } = useBooking();
   const { designs, featuredDesigns } = useDesigns();
   const navigate = useNavigate();
-  const { user, checkBookingRespond } = useAuth();
+  const { user, checkBookingRespond, refetchBookingRespond } = useAuth();
 
   const [hoursLeft, setHoursLeft] = useState(0);
 
@@ -48,6 +48,7 @@ const Hero: React.FC = () => {
   }, []);
 
   const handleBookingClick = () => {
+    refetchBookingRespond();
     const respondStatus = !user
       ? "no_user"
       : checkBookingRespond?.email && checkBookingRespond?.respond == null
@@ -245,7 +246,7 @@ const Hero: React.FC = () => {
         <AnimatePresence>
           {scrollY < 100 && (
             <motion.div
-              className="flex flex-col items-center mt-5"
+              className="flex flex-col items-center mt-2"
               initial={{ opacity: 1 }}
               animate={{
                 opacity: 1,

@@ -19,7 +19,7 @@ import { useCategories } from "@/hooks/use-supabase";
 
 const About: React.FC = () => {
   const { openBookingForm } = useBooking();
-  const { user, checkBookingRespond } = useAuth();
+  const { user, checkBookingRespond, refetchBookingRespond } = useAuth();
   const navigate = useNavigate();
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showWaitingRespond, setShowWaitingRespond] = useState(false);
@@ -32,6 +32,7 @@ const About: React.FC = () => {
   const { featuredCategories = [] } = useCategories();
 
   const handleBookingClick = () => {
+    refetchBookingRespond();
     const respondStatus = !user
       ? "no_user"
       : checkBookingRespond?.email && checkBookingRespond?.respond == null
