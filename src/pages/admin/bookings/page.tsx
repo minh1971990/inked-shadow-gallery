@@ -213,133 +213,151 @@ export default function AdminBookingsPage() {
       </div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="bg-black/95 border-2 border-white/20 text-white max-w-2xl">
-          <DialogHeader>
+        <DialogContent
+          className="bg-black/95 border-2 border-white/20 text-white max-w-sm sm:max-w-md md:max-w-2xl p-0"
+          style={{ maxHeight: "90vh" }}
+        >
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle>Booking Details</DialogTitle>
             <DialogDescription className="text-white/70">
               View detailed information about this booking.
             </DialogDescription>
           </DialogHeader>
-
-          {selectedBooking && (
-            <div className="space-y-6 py-4">
-              {/* Customer Information */}
-              <div>
-                <h4 className="font-semibold text-lg mb-3">
-                  Customer Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="view-name">Name</Label>
-                    <Input
-                      id="view-name"
-                      value={selectedBooking.name}
-                      readOnly
-                      className="bg-white/5 text-white border-white/20"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="view-email">Email</Label>
-                    <Input
-                      id="view-email"
-                      value={selectedBooking.email}
-                      readOnly
-                      className="bg-white/5 text-white border-white/20"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="view-phone">Phone</Label>
-                    <Input
-                      id="view-phone"
-                      value={selectedBooking.phone}
-                      readOnly
-                      className="bg-white/5 text-white border-white/20"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="view-status">Status</Label>
+          <div className="overflow-y-auto px-6 pb-6 max-h-[60vh]">
+            {selectedBooking && (
+              <div className="space-y-6 py-2">
+                {/* Customer Information */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-3">
+                    Customer Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      {selectedBooking.respond === "Confirm" ? (
-                        <span className="px-2 py-1 rounded bg-green-600/20 text-green-400 font-semibold">
-                          Confirm
-                        </span>
-                      ) : selectedBooking.respond === "Reject" ? (
-                        <span className="px-2 py-1 rounded bg-red-600/20 text-red-400 font-semibold">
-                          Reject
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 rounded bg-yellow-600/20 text-yellow-400 font-semibold">
-                          Pending
-                        </span>
-                      )}
+                      <Label htmlFor="view-name">Name</Label>
+                      <Input
+                        id="view-name"
+                        value={selectedBooking.name}
+                        readOnly
+                        className="bg-white/5 text-white border-white/20"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="view-email">Email</Label>
+                      <Input
+                        id="view-email"
+                        value={selectedBooking.email}
+                        readOnly
+                        className="bg-white/5 text-white border-white/20"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="view-phone">Phone</Label>
+                      <Input
+                        id="view-phone"
+                        value={selectedBooking.phone}
+                        readOnly
+                        className="bg-white/5 text-white border-white/20"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="view-status">Status</Label>
+                      <div>
+                        {selectedBooking.respond === "Confirm" ? (
+                          <span className="px-2 py-1 rounded bg-green-600/20 text-green-400 font-semibold">
+                            Confirm
+                          </span>
+                        ) : selectedBooking.respond === "Reject" ? (
+                          <span className="px-2 py-1 rounded bg-red-600/20 text-red-400 font-semibold">
+                            Reject
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded bg-yellow-600/20 text-yellow-400 font-semibold">
+                            Pending
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Tattoo Information */}
-              <div>
-                <h4 className="font-semibold text-lg mb-3">
-                  Tattoo Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="view-style">Style</Label>
-                    <Input
-                      id="view-style"
-                      value={selectedBooking.style}
-                      readOnly
-                      className="bg-white/5 text-white border-white/20"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="view-size">Size</Label>
-                    <Input
-                      id="view-size"
-                      value={selectedBooking.size}
-                      readOnly
-                      className="bg-white/5 text-white border-white/20"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="view-placement">Placement</Label>
-                    <Input
-                      id="view-placement"
-                      value={selectedBooking.placement}
-                      readOnly
-                      className="bg-white/5 text-white border-white/20"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="view-idea">Idea</Label>
-                    <Input
-                      id="view-idea"
-                      value={selectedBooking.idea}
-                      readOnly
-                      className="bg-white/5 text-white border-white/20"
-                    />
+                {/* Tattoo Information */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-3">
+                    Tattoo Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="view-style">Style</Label>
+                      <Input
+                        id="view-style"
+                        value={selectedBooking.style}
+                        readOnly
+                        className="bg-white/5 text-white border-white/20"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="view-size">Size</Label>
+                      <Input
+                        id="view-size"
+                        value={selectedBooking.size}
+                        readOnly
+                        className="bg-white/5 text-white border-white/20"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="view-placement">Placement</Label>
+                      <Input
+                        id="view-placement"
+                        value={selectedBooking.placement}
+                        readOnly
+                        className="bg-white/5 text-white border-white/20"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="view-idea">Idea</Label>
+                      <Input
+                        id="view-idea"
+                        value={selectedBooking.idea}
+                        readOnly
+                        className="bg-white/5 text-white border-white/20"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Date */}
-              <div>
-                <h4 className="font-semibold text-lg mb-3">Booking Date</h4>
-                <Input
-                  id="view-date"
-                  value={new Date(selectedBooking.date).toLocaleString()}
-                  readOnly
-                  className="bg-white/5 text-white border-white/20 w-full"
-                />
+                {/* Date */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-3">Booking Date</h4>
+                  <Input
+                    id="view-date"
+                    value={
+                      selectedBooking?.date
+                        ? new Date(selectedBooking.date).toLocaleString(
+                            undefined,
+                            {
+                              hour12: false,
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              timeZone: "UTC",
+                            }
+                          )
+                        : ""
+                    }
+                    readOnly
+                    className="bg-white/5 text-white border-white/20 w-full"
+                  />
+                </div>
               </div>
-            </div>
-          )}
-
-          <DialogFooter>
+            )}
+          </div>
+          <DialogFooter className="p-6 pt-0">
             <Button
               variant="outline"
               onClick={() => setIsViewDialogOpen(false)}
-              className="bg-white text-black hover:bg-white/90"
+              className="bg-white text-black hover:bg-white/90 w-full"
             >
               Close
             </Button>
