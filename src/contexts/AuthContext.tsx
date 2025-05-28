@@ -30,6 +30,7 @@ interface Booking {
   date: string | null;
   respond: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {

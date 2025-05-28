@@ -126,6 +126,7 @@ export interface Database {
           date: string;
           respond: string;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -139,6 +140,7 @@ export interface Database {
           date: string;
           respond?: string;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -152,6 +154,7 @@ export interface Database {
           date?: string;
           respond?: string;
           created_at?: string;
+          updated_at?: string;
         };
       };
     };

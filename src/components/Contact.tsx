@@ -341,17 +341,29 @@ const Contact: React.FC = () => {
 
   const [hoursLeft, setHoursLeft] = useState(0);
 
+  useEffect(() => {
+    if (
+      checkBookingRespond?.respond === "Reject" &&
+      checkBookingRespond?.updated_at
+    ) {
+      const updatedAt = new Date(checkBookingRespond.updated_at);
+      const now = new Date();
+      const hoursDiff =
+        (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
+      if (hoursDiff < 3) {
+        setHoursLeft(3 - hoursDiff);
+      }
+    }
+  }, [checkBookingRespond]);
+
   const Rejected = () => {
-    const createdAt = new Date(checkBookingRespond.created_at);
+    const updatedAt = new Date(checkBookingRespond.updated_at);
     const now = new Date();
 
-    const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+    const hoursDiff = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
 
-    if (hoursDiff >= 24) {
+    if (hoursDiff >= 3) {
     } else {
-      const remainingHours = 24 - hoursDiff;
-      setHoursLeft(remainingHours);
-
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">

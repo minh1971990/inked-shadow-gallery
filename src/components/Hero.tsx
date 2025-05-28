@@ -69,16 +69,16 @@ const Hero: React.FC = () => {
         break;
 
       case "rejected": {
-        const createdAt = new Date(checkBookingRespond.created_at);
+        const updatedAt = new Date(checkBookingRespond.updated_at);
         const now = new Date();
 
         const hoursDiff =
-          (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+          (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
 
-        if (hoursDiff >= 24) {
+        if (hoursDiff >= 3) {
           openBookingForm();
         } else {
-          const remainingHours = 24 - hoursDiff;
+          const remainingHours = 3 - hoursDiff;
           setHoursLeft(remainingHours);
           setShowWaitingTime(true);
         }

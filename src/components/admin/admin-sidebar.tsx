@@ -24,7 +24,6 @@ export default function AdminSidebar() {
     { name: "Categories", href: "/admin/categories", icon: Tag },
     { name: "Designs", href: "/admin/designs", icon: ImageIcon },
     { name: "Bookings", href: "/admin/bookings", icon: Calendar },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
   const isActive = (path: string) => {
@@ -96,15 +95,6 @@ export default function AdminSidebar() {
                 {item.name}
               </Link>
             ))}
-          </div>
-          <div className="p-4 mt-auto">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
-            >
-              <LogOut className="mr-3 h-5 w-5" aria-hidden="true" />
-              Sign out
-            </Button>
           </div>
         </div>
       </div>
