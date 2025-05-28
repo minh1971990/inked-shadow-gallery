@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+
+import type { Database } from "@/types/supabase";
+type Tables = Database["public"]["Tables"];
 
 interface Profile {
   id: string;
@@ -11,6 +15,21 @@ interface Profile {
   email_verified: boolean;
   created_at: string;
   updated_at: string;
+  phone?: string | null;
+}
+
+interface Booking {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  style: string | null;
+  size: string | null;
+  placement: string | null;
+  idea: string | null;
+  date: string | null;
+  respond: string | null;
+  created_at: string;
 }
 
 interface AuthContextType {
@@ -19,9 +38,12 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  checkBookingRespond: Booking | null;
   loading: boolean;
   userProfile: Profile | null;
   profileLoading: boolean;
+  isLoadingAuth: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,7 +62,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const init = async () => {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
+      if (error)
+        console.error("AuthContext: Supabase getSession error:", error);
+
       setUser(session?.user ?? null);
       setSession(session);
       setLoading(false);
@@ -50,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setSession(session);
       setLoading(false);
@@ -81,12 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           .single();
 
         if (error) {
+          console.error("AuthContext: Error fetching profile:", error);
           if (error.code === "PGRST116") {
-            console.log(
-              "AuthContext: Profile not found, attempting to create."
-            );
-
-            // Fetch latest user data and session right before creating profile
             const { data, error: fetchError } =
               await supabase.auth.getSession();
 
@@ -102,36 +124,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               return;
             }
 
-            console.log(
-              "AuthContext: Latest user data for profile creation:",
-              latestUser
-            );
-            console.log(
-              "AuthContext: Latest session for profile creation:",
-              latestSession
-            );
-
-            // Double check email confirmed status from latest user data
             if (!latestUser.email_confirmed_at) {
-              console.log(
-                "AuthContext: Email not confirmed from latest user data, not creating profile."
-              );
               setUserProfile(null);
               return;
             }
-
-            console.log(
-              "AuthContext: User metadata for new profile:",
-              latestUser.user_metadata
-            );
-            console.log(
-              "AuthContext: full_name from metadata:",
-              latestUser.user_metadata.full_name
-            );
-            console.log(
-              "AuthContext: phone from metadata:",
-              latestUser.user_metadata.phone
-            );
 
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
@@ -154,15 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             }
 
             if (newProfile && newProfile.length > 0) {
-              console.log(
-                "AuthContext: New profile created successfully:",
-                newProfile[0]
-              );
               setUserProfile(newProfile[0]);
-            } else {
-              console.log(
-                "AuthContext: Profile insert successful but no data returned."
-              );
             }
           } else {
             setUserProfile(null);
@@ -177,7 +165,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         );
         setUserProfile(null);
       } finally {
-        if (!cancelled) setProfileLoading(false);
+        if (!cancelled) {
+          setProfileLoading(false);
+        }
       }
     };
 
@@ -205,6 +195,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [user]);
 
+  const {
+    data: checkBookingRespond,
+    isLoading: bookingLoading,
+    error: bookingError,
+  } = useQuery({
+    queryKey: ["check-booking-respond", userProfile?.email],
+    enabled: !!userProfile?.email,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("email", userProfile.email)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+      return (data?.[0] ?? null) as Booking | null;
+    },
+  });
+
   const signUp = async (email: string, password: string, fullName: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -216,7 +226,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("AuthContext: SignUp error:", error);
+      throw error;
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -226,12 +239,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("AuthContext: SignIn error:", error);
+        throw error;
+      }
 
       if (data.user) {
         navigate("/");
       }
     } catch (error: any) {
+      console.error("AuthContext: Unexpected SignIn error:", error);
       throw error;
     }
   };
@@ -239,11 +256,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error("AuthContext: SignOut error:", error);
+        throw error;
+      }
     } catch (error: any) {
+      console.error("AuthContext: Unexpected SignOut error:", error);
       throw error;
     }
   };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
+    if (error) throw error;
+  };
+
+  const isLoadingAuth = loading || (user && profileLoading);
 
   return (
     <AuthContext.Provider
@@ -253,9 +283,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signIn,
         signUp,
         signOut,
+        resetPassword,
+        checkBookingRespond,
         loading,
         userProfile,
         profileLoading,
+        isLoadingAuth,
       }}
     >
       {children}

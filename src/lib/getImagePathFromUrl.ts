@@ -1,7 +1,6 @@
 export function getImagePathFromUrl(url: string): string | null {
   try {
-    const base =
-      "https://aiimnilbbcpgpwmezdav.supabase.co/storage/v1/object/public/designs/";
+    const base = import.meta.env.VITE_DESIGN_IMAGE_URL;
     if (!url.startsWith(base)) return null;
 
     return url.replace(base, "").replace(/^\/+/, "");

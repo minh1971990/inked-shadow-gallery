@@ -115,27 +115,42 @@ export interface Database {
       };
       bookings: {
         Row: {
-          id: number;
-          user_id: string;
-          design_id: number;
+          id: string;
+          name: string;
+          email: string;
+          phone: string | null;
+          style: string | null;
+          size: string | null;
+          placement: string | null;
+          idea: string | null;
           date: string;
-          status: string;
+          respond: string;
           created_at: string;
         };
         Insert: {
-          id?: number;
-          user_id: string;
-          design_id: number;
+          id?: string;
+          name: string;
+          email: string;
+          phone?: string | null;
+          style?: string | null;
+          size?: string | null;
+          placement?: string | null;
+          idea?: string | null;
           date: string;
-          status?: string;
+          respond?: string;
           created_at?: string;
         };
         Update: {
-          id?: number;
-          user_id?: string;
-          design_id?: number;
+          id?: string;
+          name?: string;
+          email?: string;
+          phone?: string | null;
+          style?: string | null;
+          size?: string | null;
+          placement?: string | null;
+          idea?: string | null;
           date?: string;
-          status?: string;
+          respond?: string;
           created_at?: string;
         };
       };

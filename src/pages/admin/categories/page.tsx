@@ -29,7 +29,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreHorizontal, Plus, Search, Edit, Trash2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import { useCategories } from "@/hooks/use-supabase";
 import { useToast } from "@/components/ui/use-toast";
@@ -37,6 +45,9 @@ import { useToast } from "@/components/ui/use-toast";
 export default function AdminCategoriesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<string>("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -57,18 +68,42 @@ export default function AdminCategoriesPage() {
   const { categories, isLoading, addCategory, updateCategory, deleteCategory } =
     useCategories();
 
-  const filteredCategories = categories?.filter((category) => {
-    const matchesSearch =
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredCategories = categories
+    ?.filter((category) => {
+      const matchesSearch =
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        category.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilter =
-      filterStatus === "all" ||
-      (filterStatus === "featured" && category.featured) ||
-      (filterStatus === "standard" && !category.featured);
+      const matchesFilter =
+        filterStatus === "all" ||
+        (filterStatus === "featured" && category.featured) ||
+        (filterStatus === "standard" && !category.featured);
 
-    return matchesSearch && matchesFilter;
-  });
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      // Sort by featured status first (true comes before false)
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+
+      // If featured status is the same, sort by the current sortOrder (newest/oldest)
+      if (sortOrder === "newest") {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      } else {
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      }
+    });
+
+  const totalPages = Math.ceil(
+    (filteredCategories?.length || 0) / ITEMS_PER_PAGE
+  );
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayedCategories = filteredCategories?.slice(startIndex, endIndex);
 
   const resetNewCategory = () => {
     setNewCategory({
@@ -226,8 +261,8 @@ export default function AdminCategoriesPage() {
         <AdminSidebar />
         <div className="md:pl-64">
           <main className="p-8">
-            <div className="flex items-center justify-center h-full">
-              <p className="text-white">Loading...</p>
+            <div className="flex items-center justify-center h-full w-full text-white/70">
+              <p>Loading...</p>
             </div>
           </main>
         </div>
@@ -240,11 +275,11 @@ export default function AdminCategoriesPage() {
       <AdminSidebar />
       <div className="md:pl-64">
         <main className="p-8">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 mx-auto w-full">
             <h1 className="text-3xl font-bold tracking-tight text-white">
               Categories Management
             </h1>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-4">
               <Dialog
                 open={isAddDialogOpen}
                 onOpenChange={(open) => {
@@ -260,7 +295,7 @@ export default function AdminCategoriesPage() {
                     Add Category
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-black/95 border border-white/10 text-white max-w-md">
+                <DialogContent className="bg-black/95 border border-white/20 text-white max-w-md">
                   <DialogHeader>
                     <DialogTitle>Add New Category</DialogTitle>
                     <DialogDescription className="text-white/70">
@@ -274,7 +309,7 @@ export default function AdminCategoriesPage() {
                         id="name"
                         placeholder="e.g., Watercolor"
                         required
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-white/5 border-white/20 text-white"
                         value={newCategory.name}
                         onChange={(e) =>
                           setNewCategory({
@@ -289,7 +324,7 @@ export default function AdminCategoriesPage() {
                       <Textarea
                         id="description"
                         placeholder="Describe this tattoo style..."
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-white/5 border-white/20 text-white"
                         value={newCategory.description}
                         onChange={(e) =>
                           setNewCategory({
@@ -303,7 +338,7 @@ export default function AdminCategoriesPage() {
                       <input
                         type="checkbox"
                         id="featured"
-                        className="rounded border-white/30 bg-white/10 text-white/70"
+                        className="rounded border-white/20 bg-white/10 text-white/70"
                         checked={newCategory.featured}
                         onChange={(e) =>
                           setNewCategory({
@@ -317,7 +352,7 @@ export default function AdminCategoriesPage() {
                       </Label>
                     </div>
                   </div>
-                  <DialogFooter>
+                  <DialogFooter className="grid grid-cols-2 gap-4 sm:flex sm:justify-end">
                     <Button
                       variant="outline"
                       onClick={() => setIsAddDialogOpen(false)}
@@ -337,13 +372,13 @@ export default function AdminCategoriesPage() {
               </Dialog>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
+            <div className="flex items-center gap-4 flex-wrap w-full">
+              <div className="relative flex-1 w-full">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/50" />
                 <Input
                   type="search"
                   placeholder="Search categories..."
-                  className="pl-8 bg-black/30 border-white/10 text-white"
+                  className="pl-8 bg-black/30 border-white/20 text-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -352,12 +387,12 @@ export default function AdminCategoriesPage() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="border-white/10 text-black"
+                    className="border-white/20 text-black"
                   >
                     Filter
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="text-black bg-white border-white/10">
+                <DropdownMenuContent className="text-black bg-white border-white/20">
                   <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -378,14 +413,28 @@ export default function AdminCategoriesPage() {
                   >
                     Standard
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Sort by date</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => setSortOrder("newest")}
+                    className={sortOrder === "newest" ? "bg-white/10" : ""}
+                  >
+                    From new to old
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setSortOrder("oldest")}
+                    className={sortOrder === "oldest" ? "bg-white/10" : ""}
+                  >
+                    From old to new
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
 
-            <div className="rounded-md border border-white/10 overflow-hidden">
+            <div className="rounded-md border border-white/20 overflow-hidden">
               <Table>
                 <TableHeader className="bg-black/30">
-                  <TableRow className="hover:bg-black/40 border-white/10">
+                  <TableRow className="hover:bg-black/40 border-white/20">
                     <TableHead className="text-white/70">Name</TableHead>
                     <TableHead className="text-white/70 hidden md:table-cell">
                       Description
@@ -402,10 +451,10 @@ export default function AdminCategoriesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCategories?.map((category) => (
+                  {displayedCategories?.map((category) => (
                     <TableRow
                       key={category.id}
-                      className="hover:bg-black/40 border-white/10"
+                      className="hover:bg-black/40 border-white/20"
                     >
                       <TableCell className="font-medium text-white">
                         {category.name}
@@ -423,7 +472,7 @@ export default function AdminCategoriesPage() {
                         ) : (
                           <Badge
                             variant="outline"
-                            className="border-white/30 text-white/70"
+                            className="border-white/20 text-white/70"
                           >
                             Standard
                           </Badge>
@@ -490,6 +539,44 @@ export default function AdminCategoriesPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {!isLoading &&
+              (!filteredCategories || filteredCategories.length === 0) && (
+                <div className="text-white/70 text-center w-full">
+                  No categories found.
+                </div>
+              )}
+
+            {/* Pagination Controls */}
+            {!isLoading && totalPages > 1 && (
+              <div className="flex items-center justify-center space-x-2 py-4 text-white w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="border-white/20 text-black hover:bg-white/10 hover:text-white"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="border-white/20 text-black hover:bg-white/10 hover:text-white"
+                >
+                  Next <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
           </div>
         </main>
       </div>
@@ -504,7 +591,7 @@ export default function AdminCategoriesPage() {
           }
         }}
       >
-        <DialogContent className="bg-black/95 border border-white/10 text-white max-w-md">
+        <DialogContent className="bg-black/95 border border-white/20 text-white max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Category</DialogTitle>
             <DialogDescription className="text-white/70">
@@ -518,7 +605,7 @@ export default function AdminCategoriesPage() {
                 id="edit-name"
                 placeholder="e.g., Watercolor"
                 required
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white"
                 value={newCategory.name}
                 onChange={(e) =>
                   setNewCategory({
@@ -533,7 +620,7 @@ export default function AdminCategoriesPage() {
               <Textarea
                 id="edit-description"
                 placeholder="Describe this tattoo style..."
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white"
                 value={newCategory.description}
                 onChange={(e) =>
                   setNewCategory({
@@ -547,7 +634,7 @@ export default function AdminCategoriesPage() {
               <input
                 type="checkbox"
                 id="edit-featured"
-                className="rounded border-white/30 bg-white/10 text-white/70"
+                className="rounded border-white/20 bg-white/10 text-white/70"
                 checked={newCategory.featured}
                 onChange={(e) =>
                   setNewCategory({
@@ -561,11 +648,11 @@ export default function AdminCategoriesPage() {
               </Label>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="grid grid-cols-2 gap-4 sm:flex sm:justify-end">
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
-              className="border-white/10 text-black hover:bg-white/10"
+              className="bg-white text-black hover:bg-white/90"
             >
               Cancel
             </Button>
@@ -582,7 +669,7 @@ export default function AdminCategoriesPage() {
 
       {/* Delete Confirm Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="bg-black/95 border border-white/10 text-white">
+        <DialogContent className="bg-black/95 border border-white/20 text-white max-w-xs sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Confirm Delete</DialogTitle>
             <DialogDescription className="text-white/70">
@@ -590,11 +677,11 @@ export default function AdminCategoriesPage() {
               be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="grid grid-cols-2 gap-4 sm:flex sm:justify-end flex-shrink-0">
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
-              className="border-white/10 text-black hover:bg-white/10"
+              className="border-white/20 text-black hover:bg-white/10"
             >
               Cancel
             </Button>

@@ -16,15 +16,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Clock } from "lucide-react";
 
 const Hero: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showWaitingRespond, setShowWaitingRespond] = useState(false);
+  const [showWaitingTime, setShowWaitingTime] = useState(false);
+  const [showWaitingForAppointment, setShowWaitingForAppointment] =
+    useState(false);
+
   const { openBookingForm } = useBooking();
   const { designs, featuredDesigns } = useDesigns();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, checkBookingRespond } = useAuth();
+
+  const [hoursLeft, setHoursLeft] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,10 +48,58 @@ const Hero: React.FC = () => {
   }, []);
 
   const handleBookingClick = () => {
-    if (!user) {
-      setShowLoginDialog(true);
-    } else {
-      openBookingForm();
+    const respondStatus = !user
+      ? "no_user"
+      : checkBookingRespond?.email && checkBookingRespond?.respond == null
+      ? "no_respond"
+      : checkBookingRespond?.respond === "Reject"
+      ? "rejected"
+      : checkBookingRespond?.respond === "Confirm"
+      ? "confirmed"
+      : "other";
+
+    switch (respondStatus) {
+      case "no_user":
+        setShowLoginDialog(true);
+        break;
+
+      case "no_respond":
+        setShowWaitingRespond(true);
+        break;
+
+      case "rejected": {
+        const createdAt = new Date(checkBookingRespond.created_at);
+        const now = new Date();
+
+        const hoursDiff =
+          (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+
+        if (hoursDiff >= 24) {
+          openBookingForm();
+        } else {
+          const remainingHours = 24 - hoursDiff;
+          setHoursLeft(remainingHours);
+          setShowWaitingTime(true);
+        }
+        break;
+      }
+
+      case "confirmed": {
+        const appointmentDate = new Date(checkBookingRespond.date);
+        const now = new Date();
+
+        if (now >= appointmentDate) {
+          openBookingForm();
+        } else {
+          setShowWaitingForAppointment(true);
+        }
+        break;
+      }
+
+      case "other":
+      default:
+        openBookingForm();
+        break;
     }
   };
 
@@ -189,7 +245,7 @@ const Hero: React.FC = () => {
         <AnimatePresence>
           {scrollY < 100 && (
             <motion.div
-              className="flex flex-col items-center mt-8"
+              className="flex flex-col items-center mt-5"
               initial={{ opacity: 1 }}
               animate={{
                 opacity: 1,
@@ -231,7 +287,7 @@ const Hero: React.FC = () => {
         >
           <div className="relative">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-white/5 via-white/20 to-white/5 rounded-xl blur opacity-50"></div>
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 relative bg-black/40 p-2 sm:p-4 rounded-xl backdrop-blur-sm border border-white/10">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 relative bg-black/40 p-2 sm:p-4 rounded-xl backdrop-blur-sm border border-white/20">
               {featuredDesigns.slice(0, 3).map((featured) => (
                 <motion.div
                   key={featured.id}
@@ -280,7 +336,7 @@ const Hero: React.FC = () => {
 
       {/* Login Dialog */}
       <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-        <DialogContent className="bg-black/95 border border-white/10 text-white">
+        <DialogContent className="bg-black/95 border border-white/20 text-white">
           <DialogHeader>
             <DialogTitle>Login Required</DialogTitle>
             <DialogDescription className="text-white/70">
@@ -291,18 +347,153 @@ const Hero: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setShowLoginDialog(false)}
-              className="border-white/10 text-black hover:bg-white/30 hover:text-white  "
+              className="border-white/20 text-black hover:bg-white/30 hover:text-white  "
             >
               Cancel
             </Button>
             <Button
               variant="outline"
               onClick={handleLogin}
-              className="border-white/10 text-black hover:bg-white/30 hover:text-white  "
+              className="border-white/20 text-black hover:bg-white/30 hover:text-white  "
             >
               Login
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wait for the respond */}
+      <Dialog open={showWaitingRespond} onOpenChange={setShowWaitingRespond}>
+        <DialogContent className="w-[90%] max-w-sm sm:max-w-md border border-white/20 text-white backdrop-blur-xl bg-black/80 shadow-xl rounded-2xl px-6 py-8 sm:px-8 sm:py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col items-center gap-6"
+          >
+            {/* Đồng hồ có animation rung rung nhẹ */}
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <Clock className="w-14 h-14 sm:w-16 sm:h-16 text-white/80" />
+            </motion.div>
+
+            <div className="flex flex-col items-center text-center">
+              <DialogTitle className="text-lg sm:text-2xl font-semibold">
+                Please wait for the respond
+              </DialogTitle>
+              <DialogDescription className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                Wait until the admin responds to your appointment before you can
+                book another one.
+              </DialogDescription>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowWaitingRespond(false)}
+              className="text-sm sm:text-base border-white/20 text-black bg-white hover:bg-white/20 hover:text-white transition-all"
+            >
+              Cancel
+            </Button>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showWaitingTime} onOpenChange={setShowWaitingTime}>
+        <DialogContent className="w-[90%] max-w-sm sm:max-w-md border border-white/20 text-white backdrop-blur-xl bg-black/80 shadow-xl rounded-2xl px-6 py-8 sm:px-8 sm:py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col items-center gap-6"
+          >
+            {/* Animated clock icon */}
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <Clock className="w-14 h-14 sm:w-16 sm:h-16 text-white/80" />
+            </motion.div>
+
+            <div className="flex flex-col items-center text-center">
+              <DialogTitle className="text-lg sm:text-2xl font-semibold">
+                Not enough time yet
+              </DialogTitle>
+              <DialogDescription className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                You need to wait another {hoursLeft.toFixed(1)} hours before you
+                can book a new appointment. Please be patient!
+              </DialogDescription>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowWaitingTime(false)}
+              className="text-sm sm:text-base border-white/20 text-black bg-white hover:bg-white/20 hover:text-white transition-all"
+            >
+              Got it!
+            </Button>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showWaitingForAppointment}
+        onOpenChange={setShowWaitingForAppointment}
+      >
+        <DialogContent className="w-[90%] max-w-sm sm:max-w-md border border-white/20 text-white backdrop-blur-xl bg-black/80 shadow-xl rounded-2xl px-6 py-8 sm:px-8 sm:py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col items-center gap-6"
+          >
+            {/* Animated clock icon */}
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <Clock className="w-14 h-14 sm:w-16 sm:h-16 text-white/80" />
+            </motion.div>
+
+            <div className="flex flex-col items-center text-center">
+              <DialogTitle className="text-lg sm:text-2xl font-semibold">
+                Please wait until your appointment is completed
+              </DialogTitle>
+              <p className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                Your current appointment will be start at <br></br>
+                {checkBookingRespond?.date
+                  ? new Date(checkBookingRespond.date).toLocaleString(
+                      undefined,
+                      {
+                        hour12: false,
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        timeZone: "UTC",
+                      }
+                    )
+                  : ""}
+              </p>
+              <DialogDescription className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                You must wait until your current appointment is completed before
+                booking a new one. Please be patient!
+              </DialogDescription>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowWaitingForAppointment(false)}
+              className="text-sm sm:text-base border-white/20 text-black bg-white hover:bg-white/20 hover:text-white transition-all"
+            >
+              Got it!
+            </Button>
+          </motion.div>
         </DialogContent>
       </Dialog>
     </section>

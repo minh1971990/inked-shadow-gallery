@@ -92,7 +92,7 @@ export function ImageUpload({
             className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
               isDragActive
                 ? "border-primary bg-primary/10"
-                : "border-white/10 hover:border-white/20"
+                : "border-white/20 hover:border-white/20"
             }`}
           >
             <input {...getInputProps()} />

@@ -25,26 +25,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import DatePicker from "react-datepicker";
 import { enUS } from "date-fns/locale";
 import axiosInstance from "@/lib/axios";
-import { addDays } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCategories } from "@/hooks/use-supabase";
+import { useCategories, useBookings } from "@/hooks/use-supabase";
+import { format, setMinutes, setHours, addDays } from "date-fns";
+
+import { useMemo } from "react";
 
 interface BookingFormMobileProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const MOCK_CATEGORIES = [
-  { id: "black-and-grey", name: "Black & Grey" },
-  { id: "realism", name: "Realism" },
-  { id: "traditional", name: "Traditional" },
-  { id: "neo-traditional", name: "Neo-Traditional" },
-  { id: "japanese", name: "Japanese" },
-  { id: "geometric", name: "Geometric" },
-  { id: "minimalist", name: "Minimalist" },
-  { id: "portrait", name: "Portrait" },
-  { id: "other", name: "Other" },
-];
 
 export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
   isOpen,
@@ -53,6 +43,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
   const { categories = [] } = useCategories();
+  const { bookings = [] } = useBookings();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -62,7 +53,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
     email: "",
     phone: "",
     style: "",
-    size: "medium",
+    size: "Medium (4-6')",
     placement: "",
     idea: "",
     date: null as Date | null,
@@ -196,6 +187,38 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const excludedTimes = useMemo(() => {
+    if (!bookings || !formData.date) return [];
+
+    const selectedDateStr = format(formData.date, "yyyy-MM-dd");
+
+    const filtered = bookings.filter((b) => {
+      if (!b.date) return false;
+      const bookingDateStr = b.date.slice(0, 10);
+      return b.respond === "Confirm" && bookingDateStr === selectedDateStr;
+    });
+
+    const blocked: Date[] = [];
+    filtered.forEach((b) => {
+      const utcDate = new Date(b.date);
+      const localDate = new Date(
+        utcDate.getUTCFullYear(),
+        utcDate.getUTCMonth(),
+        utcDate.getUTCDate(),
+        utcDate.getUTCHours(),
+        utcDate.getUTCMinutes(),
+        utcDate.getUTCSeconds()
+      );
+      for (let i = -2; i < 3; i++) {
+        const slot = new Date(localDate.getTime());
+        slot.setMinutes(slot.getMinutes() + i * 30);
+        blocked.push(slot);
+      }
+    });
+
+    return blocked;
+  }, [bookings, formData.date]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -212,6 +235,14 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
     setIsSubmitting(true);
 
     try {
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      const date = formData.date;
+      const localDateStr = date
+        ? `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+            date.getDate()
+          )} ${pad(date.getHours())}:${pad(date.getMinutes())}:00+00`
+        : null;
+
       const formPayload = {
         name: formData.name,
         email: formData.email,
@@ -220,7 +251,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
         size: formData.size,
         placement: formData.placement,
         idea: formData.idea,
-        date: formData.date ? formData.date.toISOString() : null,
+        date: localDateStr,
       };
 
       await axiosInstance.post("", formPayload);
@@ -262,7 +293,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
   };
 
   return (
-    <DialogContent className="max-w-[95%] p-0 h-[90vh] max-h-[90vh] bg-black/95 border border-white/10 backdrop-blur-md rounded-xl overflow-hidden">
+    <DialogContent className="max-w-[95%] p-0 h-[90vh] max-h-[90vh] bg-black/95 border border-white/20 backdrop-blur-md rounded-xl overflow-hidden">
       {/* Close button - more visible on mobile */}
       <button
         onClick={onClose}
@@ -312,7 +343,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                         setFormData((f) => ({ ...f, name: value }));
                         validateField("name", value);
                       }}
-                      className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                      className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 h-10 ${
                         errors.name ? "border-red-500" : ""
                       }`}
                     />
@@ -338,7 +369,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                         setFormData((f) => ({ ...f, email: value }));
                         validateField("email", value);
                       }}
-                      className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                      className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 h-10 ${
                         errors.email ? "border-red-500" : ""
                       }`}
                     />
@@ -368,7 +399,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                         setFormData((f) => ({ ...f, phone: value }));
                         validateField("phone", value);
                       }}
-                      className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                      className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 h-10 ${
                         errors.phone ? "border-red-500" : ""
                       }`}
                     />
@@ -400,7 +431,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       }}
                     >
                       <SelectTrigger
-                        className={`bg-white/5 border-white/10 text-white h-10 ${
+                        className={`bg-white/5 border-white/20 text-white h-10 ${
                           errors.style ? "border-red-500" : ""
                         }`}
                       >
@@ -450,54 +481,54 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                   >
                     <div className="flex items-center space-x-2 bg-white/5 px-3 py-2 rounded-md">
                       <RadioGroupItem
-                        value="small"
+                        value="Small (2-3')"
                         id="size-small"
-                        className="text-white border-white/30"
+                        className="text-white border-white/20"
                       />
                       <Label
                         htmlFor="size-small"
                         className="text-white/80 text-sm"
                       >
-                        Small (2-3")
+                        Small (2-3')
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 bg-white/5 px-3 py-2 rounded-md">
                       <RadioGroupItem
-                        value="medium"
+                        value="Medium (4-6')"
                         id="size-medium"
-                        className="text-white border-white/30"
+                        className="text-white border-white/20"
                       />
                       <Label
                         htmlFor="size-medium"
                         className="text-white/80 text-sm"
                       >
-                        Medium (4-6")
+                        Medium (4-6')
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 bg-white/5 px-3 py-2 rounded-md">
                       <RadioGroupItem
-                        value="large"
+                        value="Large (7-10')"
                         id="size-large"
-                        className="text-white border-white/30"
+                        className="text-white border-white/20"
                       />
                       <Label
                         htmlFor="size-large"
                         className="text-white/80 text-sm"
                       >
-                        Large (7-10")
+                        Large (7-10')
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 bg-white/5 px-3 py-2 rounded-md">
                       <RadioGroupItem
-                        value="extra-large"
+                        value="Extra large (11'+)"
                         id="size-xl"
-                        className="text-white border-white/30"
+                        className="text-white border-white/20"
                       />
                       <Label
                         htmlFor="size-xl"
                         className="text-white/80 text-sm"
                       >
-                        XL (11"+)
+                        Extra Large (11'+)
                       </Label>
                     </div>
                   </RadioGroup>
@@ -519,7 +550,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       setFormData((f) => ({ ...f, placement: value }));
                       validateField("placement", value);
                     }}
-                    className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 h-10 ${
+                    className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 h-10 ${
                       errors.placement ? "border-red-500" : ""
                     }`}
                   />
@@ -547,7 +578,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                       setFormData((f) => ({ ...f, idea: value }));
                       validateField("idea", value);
                     }}
-                    className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 min-h-[80px] ${
+                    className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 min-h-[80px] ${
                       errors.idea ? "border-red-500" : ""
                     }`}
                   />
@@ -563,7 +594,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                   >
                     Preferred Consultation Date
                   </label>
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-md px-3 py-2 h-10">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/20 rounded-md px-3 py-2 h-10">
                     <Calendar className="h-4 w-4 text-white/50" />
 
                     <DatePicker
@@ -573,7 +604,7 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                         validateField("date", date);
                       }}
                       locale={enUS}
-                      placeholderText="mm/dd/yyyy"
+                      placeholderText="mm dd,yyyy h:m AM or PM"
                       required
                       className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
                       showTimeSelect
@@ -586,6 +617,17 @@ export const BookingFormMobile: React.FC<BookingFormMobileProps> = ({
                         tomorrow.setHours(0, 0, 0, 0);
                         return date >= tomorrow;
                       }}
+                      minTime={
+                        formData.date
+                          ? setHours(setMinutes(formData.date, 0), 8)
+                          : setHours(setMinutes(new Date(), 0), 8)
+                      }
+                      maxTime={
+                        formData.date
+                          ? setHours(setMinutes(formData.date, 0), 21)
+                          : setHours(setMinutes(new Date(), 0), 21)
+                      }
+                      excludeTimes={excludedTimes}
                     />
                   </div>
                   <p className="text-white/50 text-xs mt-1">

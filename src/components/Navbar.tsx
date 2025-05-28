@@ -152,7 +152,7 @@ const DesktopMenu = ({
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-white text-black border border-white/10 backdrop-blur-md">
+            <DropdownMenuContent className="w-56 bg-white text-black border border-white/20 backdrop-blur-md">
               <DropdownMenuItem
                 onClick={() => setIsProfileOpen(true)}
                 className="hover:!bg-black/50 hover:!text-white focus:!bg-black/50 focus:!text-white"
@@ -161,10 +161,12 @@ const DesktopMenu = ({
               </DropdownMenuItem>
               {userProfile?.role === "admin" && (
                 <DropdownMenuItem
-                  onClick={() => navigate("/admin")}
+                  asChild
                   className="hover:!bg-black/50 hover:!text-white focus:!bg-black/50 focus:!text-white"
                 >
-                  Access Data
+                  <a href="/admin" target="_blank" rel="noopener noreferrer">
+                    Access Data
+                  </a>
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator className="bg-gray-200" />
@@ -356,44 +358,65 @@ const MobileMenu = ({
             onOpenChange={setIsLogoutConfirmOpen}
           >
             <div className="flex flex-col items-center space-y-4">
-              <Button
-                variant="outline"
-                className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white cursor-pointer hover:bg-white"
-                onClick={() => {
-                  toggleMenu();
-                  setIsProfileOpen(true);
-                }}
-              >
-                <span className="relative z-10 text-white group-hover:text-black group-active:text-black transition-colors">
-                  Profile
-                </span>
-              </Button>
-              {userProfile?.role === "admin" && (
+              {user ? (
+                <>
+                  {userProfile?.role === "admin" && (
+                    <Button
+                      variant="outline"
+                      className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white cursor-pointer hover:bg-white"
+                      asChild
+                    >
+                      <a
+                        href="/admin"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => toggleMenu()}
+                      >
+                        <span className="relative z-10 text-white group-hover:text-black group-active:text-black transition-colors">
+                          Access Data
+                        </span>
+                      </a>
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white cursor-pointer hover:bg-white"
+                    onClick={() => {
+                      toggleMenu();
+                      setIsProfileOpen(true);
+                    }}
+                  >
+                    <span className="relative z-10 text-white group-hover:text-black group-active:text-black transition-colors">
+                      Profile
+                    </span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white cursor-pointer hover:bg-white"
+                    onClick={() => {
+                      toggleMenu();
+                      setIsLogoutConfirmOpen(true);
+                    }}
+                  >
+                    <span className="relative z-10 text-white group-hover:text-black group-active:text-black transition-colors">
+                      Logout
+                    </span>
+                  </Button>
+                </>
+              ) : (
                 <Button
                   variant="outline"
                   className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white cursor-pointer hover:bg-white"
                   onClick={() => {
                     toggleMenu();
-                    navigate("/admin");
+                    navigate("/login");
                   }}
                 >
                   <span className="relative z-10 text-white group-hover:text-black group-active:text-black transition-colors">
-                    Access Data
+                    Login
                   </span>
                 </Button>
               )}
-              <Button
-                variant="outline"
-                className="relative group overflow-hidden px-6 py-2 rounded-full bg-black border border-white cursor-pointer hover:bg-white"
-                onClick={() => {
-                  toggleMenu();
-                  setIsLogoutConfirmOpen(true);
-                }}
-              >
-                <span className="relative z-10 text-white group-hover:text-black group-active:text-black transition-colors">
-                  Logout
-                </span>
-              </Button>
             </div>
 
             <AlertDialogContent>

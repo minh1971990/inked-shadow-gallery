@@ -109,8 +109,8 @@ const Footer: React.FC = () => {
             </motion.div>
           </div>
 
-          {/* Quick links */}
-          <div className="lg:col-span-1">
+          {/* Quick Links */}
+          <div className="lg:col-span-1 col-span-2">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -154,7 +154,7 @@ const Footer: React.FC = () => {
           </div>
 
           {/* Contact info */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 col-span-2 mt-8 lg:mt-0">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -229,7 +229,7 @@ const Footer: React.FC = () => {
               </p>
 
               {isSubscribed ? (
-                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                   <div className="flex items-center">
                     <CheckCircle2 className="text-white mr-3 h-5 w-5" />
                     <p className="text-white/90 text-sm">
@@ -244,7 +244,7 @@ const Footer: React.FC = () => {
                     <Input
                       type="email"
                       placeholder="Your email address"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 pr-12"
+                      className="bg-white/5 border-white/20 text-white placeholder:text-white/30 pr-12"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -268,7 +268,7 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Bottom footer */}
-        <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t border-white/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-white/50 text-sm mb-4 md:mb-0">
             © {currentYear} Artlllex. All rights reserved.
           </p>

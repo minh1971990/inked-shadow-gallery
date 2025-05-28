@@ -8,21 +8,60 @@ import {
 import { Overview } from "@/components/admin/overview";
 import { RecentUsers } from "@/components/admin/recent-users";
 import { RecentDesigns } from "@/components/admin/recent-designs";
+import { MonthlyDesigns } from "@/components/admin/monthly-designs";
 import AdminSidebar from "@/components/admin/admin-sidebar";
+import { useStats } from "@/hooks/use-supabase";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminDashboard() {
+  const { stats, isLoading: statsLoading } = useStats();
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error("Error fetching users:", error);
+        throw error;
+      }
+      return data;
+    },
+  });
+
+  const isLoading = statsLoading || usersLoading;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black">
+        <AdminSidebar />
+        <div className="md:pl-64">
+          <main className="p-8">
+            <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+              <div className="text-white">Loading...</div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black">
       <AdminSidebar />
       <div className="md:pl-64">
         <main className="p-8">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 mx-auto w-full">
             <h1 className="text-3xl font-bold tracking-tight text-white">
               Admin Dashboard
             </h1>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-black/50 border-white/10">
+              <Card className="bg-black/50 border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-white/70">
                     Total Users
@@ -43,14 +82,16 @@ export default function AdminDashboard() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">245</div>
+                  <div className="text-2xl font-bold text-white">
+                    {users?.length || 0}
+                  </div>
                   <p className="text-xs text-white/50 mt-1">
-                    +12% from last month
+                    +{stats?.newUsersThisMonth || 0} this month
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-black/50 border-white/10">
+              <Card className="bg-black/50 border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-white/70">
                     Active Bookings
@@ -70,14 +111,16 @@ export default function AdminDashboard() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">18</div>
+                  <div className="text-2xl font-bold text-white">
+                    {stats?.totalBookings || 0}
+                  </div>
                   <p className="text-xs text-white/50 mt-1">
-                    +2 scheduled today
+                    +{stats?.todayBookings || 0} scheduled today
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-black/50 border-white/10">
+              <Card className="bg-black/50 border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-white/70">
                     Total Designs
@@ -98,12 +141,16 @@ export default function AdminDashboard() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">132</div>
-                  <p className="text-xs text-white/50 mt-1">+8 new this week</p>
+                  <div className="text-2xl font-bold text-white">
+                    {stats?.totalDesigns || 0}
+                  </div>
+                  <p className="text-xs text-white/50 mt-1">
+                    +{stats?.newDesignsThisMonth || 0} this month
+                  </p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-black/50 border-white/10">
+              <Card className="bg-black/50 border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-white/70">
                     Categories
@@ -122,14 +169,18 @@ export default function AdminDashboard() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">9</div>
-                  <p className="text-xs text-white/50 mt-1">+1 new category</p>
+                  <div className="text-2xl font-bold text-white">
+                    {stats?.totalCategories || 0}
+                  </div>
+                  <p className="text-xs text-white/50 mt-1">
+                    +{stats?.newCategoriesThisMonth || 0} new this month
+                  </p>
                 </CardContent>
               </Card>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4 bg-black/50 border-white/10">
+              <Card className="col-span-4 bg-black/50 border-white/20">
                 <CardHeader>
                   <CardTitle className="text-white">Overview</CardTitle>
                   <CardDescription className="text-white/50">
@@ -137,34 +188,48 @@ export default function AdminDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Overview />
+                  <Overview data={stats?.dailyData || []} />
                 </CardContent>
               </Card>
 
-              <Card className="col-span-3 bg-black/50 border-white/10">
+              <Card className="col-span-3 bg-black/50 border-white/20">
                 <CardHeader>
                   <CardTitle className="text-white">Recent Users</CardTitle>
                   <CardDescription className="text-white/50">
-                    Recently registered users
+                    Last 5 registered users
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RecentUsers />
+                  <RecentUsers limit={5} />
                 </CardContent>
               </Card>
             </div>
 
-            <Card className="bg-black/50 border-white/10">
-              <CardHeader>
-                <CardTitle className="text-white">Recent Designs</CardTitle>
-                <CardDescription className="text-white/50">
-                  Recently added tattoo designs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RecentDesigns />
-              </CardContent>
-            </Card>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="bg-black/50 border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Monthly Designs</CardTitle>
+                  <CardDescription className="text-white/50">
+                    Number of designs added per month
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MonthlyDesigns data={stats?.monthlyData || []} />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-black/50 border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Recent Designs</CardTitle>
+                  <CardDescription className="text-white/50">
+                    Last 6 added tattoo designs
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RecentDesigns limit={6} />
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
       </div>

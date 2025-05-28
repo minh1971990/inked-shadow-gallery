@@ -15,17 +15,75 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 
+import { useCategories } from "@/hooks/use-supabase";
+
 const About: React.FC = () => {
   const { openBookingForm } = useBooking();
-  const { user } = useAuth();
+  const { user, checkBookingRespond } = useAuth();
   const navigate = useNavigate();
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showWaitingRespond, setShowWaitingRespond] = useState(false);
+  const [showWaitingTime, setShowWaitingTime] = useState(false);
+  const [showWaitingForAppointment, setShowWaitingForAppointment] =
+    useState(false);
+
+  const [hoursLeft, setHoursLeft] = useState(0);
+
+  const { featuredCategories = [] } = useCategories();
 
   const handleBookingClick = () => {
-    if (!user) {
-      setShowLoginDialog(true);
-    } else {
-      openBookingForm();
+    const respondStatus = !user
+      ? "no_user"
+      : checkBookingRespond?.email && checkBookingRespond?.respond == null
+      ? "no_respond"
+      : checkBookingRespond?.respond === "Reject"
+      ? "rejected"
+      : checkBookingRespond?.respond === "Confirm"
+      ? "confirmed"
+      : "other";
+
+    switch (respondStatus) {
+      case "no_user":
+        setShowLoginDialog(true);
+        break;
+
+      case "no_respond":
+        setShowWaitingRespond(true);
+        break;
+
+      case "rejected": {
+        const createdAt = new Date(checkBookingRespond.created_at);
+        const now = new Date();
+
+        const hoursDiff =
+          (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+
+        if (hoursDiff >= 24) {
+          openBookingForm();
+        } else {
+          const remainingHours = 24 - hoursDiff;
+          setHoursLeft(remainingHours);
+          setShowWaitingTime(true);
+        }
+        break;
+      }
+
+      case "confirmed": {
+        const appointmentDate = new Date(checkBookingRespond.date);
+        const now = new Date();
+
+        if (now >= appointmentDate) {
+          openBookingForm();
+        } else {
+          setShowWaitingForAppointment(true);
+        }
+        break;
+      }
+
+      case "other":
+      default:
+        openBookingForm();
+        break;
     }
   };
 
@@ -92,14 +150,14 @@ const About: React.FC = () => {
               {/* Stats overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-black/60 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+                  <div className="bg-black/60 backdrop-blur-sm p-4 rounded-lg border border-white/20">
                     <div className="flex items-center gap-2 mb-1">
                       <Clock className="w-4 h-4 text-white/70" />
                       <span className="text-white/70 text-xs">Experience</span>
                     </div>
                     <p className="text-white text-xl font-bold">10+ Years</p>
                   </div>
-                  <div className="bg-black/60 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+                  <div className="bg-black/60 backdrop-blur-sm p-4 rounded-lg border border-white/20">
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="w-4 h-4 text-white/70" />
                       <span className="text-white/70 text-xs">Clients</span>
@@ -114,7 +172,7 @@ const About: React.FC = () => {
             <div className="absolute top-8 -right-8 w-full h-full border-2 border-white/20 rounded-lg -z-10"></div>
 
             {/* Artist name card */}
-            <div className="absolute -bottom-10 sm:-bottom-12 left-1/2 sm:-left-12 -translate-x-1/2 sm:translate-x-0 bg-white/5 backdrop-blur-md p-3 sm:p-4 rounded-lg border border-white/10 z-20 text-center sm:text-left">
+            <div className="absolute -bottom-10 sm:-bottom-12 left-1/2 sm:-left-5 -translate-x-1/2 sm:translate-x-0 bg-white/5 backdrop-blur-md p-3 sm:p-4 rounded-lg border border-white/20 z-20 text-center sm:text-left">
               <h3 className="text-white text-2xl font-bold mb-1">A L E X</h3>
               <p className="text-white/70 text-sm">Founder & Lead Artist</p>
             </div>
@@ -128,7 +186,7 @@ const About: React.FC = () => {
           >
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/10">
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/20">
                   <Info className="w-6 h-6 text-white/80" />
                 </div>
                 <div>
@@ -143,7 +201,7 @@ const About: React.FC = () => {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/10">
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/20">
                   <Star className="w-6 h-6 text-white/80" />
                 </div>
                 <div>
@@ -165,24 +223,17 @@ const About: React.FC = () => {
                   Specialties
                 </h3>
                 <div className="cursor-pointer flex flex-wrap gap-2 mb-8">
-                  {[
-                    "Black & Grey",
-                    "Dotwork",
-                    "Line Art",
-                    "Geometric",
-                    "Minimalist",
-                    "Realism",
-                  ].map((specialty) => (
+                  {featuredCategories?.map((specialty) => (
                     <motion.span
-                      key={specialty}
-                      className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-white/90 text-sm backdrop-blur-sm"
+                      key={specialty.id}
+                      className="px-4 py-2 bg-white/5 border border-white/20 rounded-full text-white/90 text-sm backdrop-blur-sm"
                       whileHover={{
                         scale: 1.05,
                         backgroundColor: "rgba(255,255,255,0.1)",
                       }}
                       transition={{ duration: 0.2 }}
                     >
-                      {specialty}
+                      {specialty.name}
                     </motion.span>
                   ))}
                 </div>
@@ -215,7 +266,7 @@ const About: React.FC = () => {
 
       {/* Login Dialog */}
       <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-        <DialogContent className="bg-black/95 border border-white/10 text-white">
+        <DialogContent className="bg-black/95 border border-white/20 text-white">
           <DialogHeader>
             <DialogTitle>Login Required</DialogTitle>
             <DialogDescription className="text-white/70">
@@ -226,18 +277,153 @@ const About: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setShowLoginDialog(false)}
-              className="border-white/10 text-black hover:bg-white/30 hover:text-white"
+              className="border-white/20 text-black hover:bg-white/30 hover:text-white"
             >
               Cancel
             </Button>
             <Button
               variant="outline"
               onClick={handleLogin}
-              className="border-white/10 text-black hover:bg-white/30 hover:text-white"
+              className="border-white/20 text-black hover:bg-white/30 hover:text-white"
             >
               Login
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wait for the respond */}
+      <Dialog open={showWaitingRespond} onOpenChange={setShowWaitingRespond}>
+        <DialogContent className="w-[90%] max-w-sm sm:max-w-md border border-white/20 text-white backdrop-blur-xl bg-black/80 shadow-xl rounded-2xl px-6 py-8 sm:px-8 sm:py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col items-center gap-6"
+          >
+            {/* Đồng hồ có animation rung rung nhẹ */}
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <Clock className="w-14 h-14 sm:w-16 sm:h-16 text-white/80" />
+            </motion.div>
+
+            <div className="flex flex-col items-center text-center">
+              <DialogTitle className="text-lg sm:text-2xl font-semibold">
+                Please wait for the respond
+              </DialogTitle>
+              <DialogDescription className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                Wait until the admin responds to your appointment before you can
+                book another one.
+              </DialogDescription>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowWaitingRespond(false)}
+              className="text-sm sm:text-base border-white/20 text-black bg-white hover:bg-white/20 hover:text-white transition-all"
+            >
+              Cancel
+            </Button>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showWaitingTime} onOpenChange={setShowWaitingTime}>
+        <DialogContent className="w-[90%] max-w-sm sm:max-w-md border border-white/20 text-white backdrop-blur-xl bg-black/80 shadow-xl rounded-2xl px-6 py-8 sm:px-8 sm:py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col items-center gap-6"
+          >
+            {/* Animated clock icon */}
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <Clock className="w-14 h-14 sm:w-16 sm:h-16 text-white/80" />
+            </motion.div>
+
+            <div className="flex flex-col items-center text-center">
+              <DialogTitle className="text-lg sm:text-2xl font-semibold">
+                Not enough time yet
+              </DialogTitle>
+              <DialogDescription className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                You need to wait another {hoursLeft.toFixed(1)} hours before you
+                can book a new appointment. Please be patient!
+              </DialogDescription>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowWaitingTime(false)}
+              className="text-sm sm:text-base border-white/20 text-black bg-white hover:bg-white/20 hover:text-white transition-all"
+            >
+              Got it!
+            </Button>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showWaitingForAppointment}
+        onOpenChange={setShowWaitingForAppointment}
+      >
+        <DialogContent className="w-[90%] max-w-sm sm:max-w-md border border-white/20 text-white backdrop-blur-xl bg-black/80 shadow-xl rounded-2xl px-6 py-8 sm:px-8 sm:py-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col items-center gap-6"
+          >
+            {/* Animated clock icon */}
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <Clock className="w-14 h-14 sm:w-16 sm:h-16 text-white/80" />
+            </motion.div>
+
+            <div className="flex flex-col items-center text-center">
+              <DialogTitle className="text-lg sm:text-2xl font-semibold">
+                Please wait until your appointment is completed
+              </DialogTitle>
+              <p className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                Your current appointment will be start at <br></br>
+                {checkBookingRespond?.date
+                  ? new Date(checkBookingRespond.date).toLocaleString(
+                      undefined,
+                      {
+                        hour12: false,
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        timeZone: "UTC",
+                      }
+                    )
+                  : ""}
+              </p>
+              <DialogDescription className="text-white/70 mt-2 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+                You must wait until your current appointment is completed before
+                booking a new one. Please be patient!
+              </DialogDescription>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowWaitingForAppointment(false)}
+              className="text-sm sm:text-base border-white/20 text-black bg-white hover:bg-white/20 hover:text-white transition-all"
+            >
+              Got it!
+            </Button>
+          </motion.div>
         </DialogContent>
       </Dialog>
     </section>

@@ -18,7 +18,7 @@ const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z
     .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
+    .min(8, { message: "Password must be at least 8 characters" }),
 });
 
 const signupSchema = z
@@ -33,7 +33,7 @@ const signupSchema = z
     email: z.string().email({ message: "Invalid email address" }),
     password: z
       .string()
-      .min(6, { message: "Password must be at least 6 characters" }),
+      .min(8, { message: "Password must be at least 8 characters" }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -41,8 +41,13 @@ const signupSchema = z
     path: ["confirmPassword"],
   });
 
+const forgotSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+});
+
 type LoginFormInputs = z.infer<typeof loginSchema>;
 type SignupFormInputs = z.infer<typeof signupSchema>;
+type ForgotFormInputs = z.infer<typeof forgotSchema>;
 
 const Logo = () => (
   <a href="/" className="relative group z-20 mb-8">
@@ -69,9 +74,16 @@ const Logo = () => (
 export default function AuthPage() {
   const [authError, setAuthError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [showForgot, setShowForgot] = useState(false);
+  const forgotForm = useForm<ForgotFormInputs>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { email: "" },
+    mode: "onChange",
+  });
 
   const loginForm = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
@@ -101,7 +113,9 @@ export default function AuthPage() {
       await signIn(data.email, data.password);
       navigate("/");
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : "An error occurred");
+      setAuthError(
+        "Email or password is incorrect, please check again before entering."
+      );
     } finally {
       setLoading(false);
     }
@@ -125,10 +139,28 @@ export default function AuthPage() {
     }
   };
 
+  const handleForgotSubmit = async (data: ForgotFormInputs) => {
+    setAuthError("");
+    setLoading(true);
+    try {
+      await resetPassword(data.email);
+      toast({
+        title: "Reset Email Sent",
+        description: "Please check your email to reset your password.",
+      });
+      setShowForgot(false);
+      forgotForm.reset();
+    } catch (err) {
+      setAuthError("Could not send reset email. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-black/95">
       <Logo />
-      <Card className="w-full max-w-md bg-black/95 border border-white/10 backdrop-blur-md p-0 rounded-xl overflow-hidden">
+      <Card className="w-full max-w-md bg-black/95 border border-white/20 backdrop-blur-md p-0 rounded-xl overflow-hidden">
         <div className="p-6">
           <CardHeader className="p-0">
             <Tabs defaultValue="login" className="w-full">
@@ -147,70 +179,135 @@ export default function AuthPage() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="login">
-                <motion.form
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  onSubmit={loginForm.handleSubmit(handleLoginSubmit)}
-                  className="space-y-5"
-                >
-                  <div>
-                    <label className="block text-white/80 text-sm font-medium mb-2">
-                      Email Address
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="your.email@example.com"
-                      {...loginForm.register("email", {
-                        onChange: () => loginForm.trigger("email"),
-                      })}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30"
-                    />
-                    {loginForm.formState.errors.email && (
-                      <p className="text-red-400 text-sm mt-1">
-                        {loginForm.formState.errors.email.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-white/80 text-sm font-medium mb-2">
-                      Password
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder="Enter your password"
-                      {...loginForm.register("password", {
-                        onChange: () => loginForm.trigger("password"),
-                      })}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30"
-                    />
-                    {loginForm.formState.errors.password && (
-                      <p className="text-red-400 text-sm mt-1">
-                        {loginForm.formState.errors.password.message}
-                      </p>
-                    )}
-                  </div>
-                  {authError && (
-                    <Alert className="bg-red-900/50 text-red-200 border-red-800">
-                      {authError}
-                    </Alert>
-                  )}
-                  <Button
-                    type="submit"
-                    className="w-full bg-white text-black hover:bg-white/90 transition-all py-6"
-                    disabled={loading}
+                {!showForgot ? (
+                  <>
+                    <motion.form
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      onSubmit={loginForm.handleSubmit(handleLoginSubmit)}
+                      className="space-y-5"
+                    >
+                      <div>
+                        <label className="block text-white/80 text-sm font-medium mb-2">
+                          Email Address
+                        </label>
+                        <Input
+                          type="email"
+                          placeholder="your.email@example.com"
+                          {...loginForm.register("email", {
+                            onChange: () => loginForm.trigger("email"),
+                          })}
+                          className="bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20"
+                        />
+                        {loginForm.formState.errors.email && (
+                          <p className="text-red-400 text-sm mt-1">
+                            {loginForm.formState.errors.email.message}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-white/80 text-sm font-medium mb-2">
+                          Password
+                        </label>
+                        <Input
+                          type="password"
+                          placeholder="Enter your password"
+                          {...loginForm.register("password", {
+                            onChange: () => loginForm.trigger("password"),
+                          })}
+                          className="bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20"
+                        />
+                        {loginForm.formState.errors.password && (
+                          <p className="text-red-400 text-sm mt-1">
+                            {loginForm.formState.errors.password.message}
+                          </p>
+                        )}
+                      </div>
+                      {authError && (
+                        <Alert className="bg-red-900/50 text-red-200 border-red-800">
+                          {authError}
+                        </Alert>
+                      )}
+                      <Button
+                        type="submit"
+                        className="w-full bg-white text-black hover:bg-white/90 transition-all py-6"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "Login"
+                        )}
+                      </Button>
+                      <button
+                        type="button"
+                        className="text-sm text-white/60 hover:underline mt-2 block w-full text-right"
+                        onClick={() => setShowForgot(true)}
+                      >
+                        Forgot password?
+                      </button>
+                    </motion.form>
+                  </>
+                ) : (
+                  <motion.form
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    onSubmit={forgotForm.handleSubmit(handleForgotSubmit)}
+                    className="space-y-5"
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      "Login"
+                    <div>
+                      <label className="block text-white/80 text-sm font-medium mb-2">
+                        Enter your email to reset password
+                      </label>
+                      <Input
+                        type="email"
+                        placeholder="your.email@example.com"
+                        {...forgotForm.register("email", {
+                          onChange: () => forgotForm.trigger("email"),
+                        })}
+                        className="bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20"
+                      />
+                      {forgotForm.formState.errors.email && (
+                        <p className="text-red-400 text-sm mt-1">
+                          {forgotForm.formState.errors.email.message}
+                        </p>
+                      )}
+                    </div>
+                    {authError && (
+                      <Alert className="bg-red-900/50 text-red-200 border-red-800">
+                        {authError}
+                      </Alert>
                     )}
-                  </Button>
-                </motion.form>
+                    <Button
+                      type="submit"
+                      className="w-full bg-white text-black hover:bg-white/90 transition-all py-6"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        "Send Reset Email"
+                      )}
+                    </Button>
+                    <button
+                      type="button"
+                      className="text-sm text-white/60 hover:underline mt-2 block w-full text-right"
+                      onClick={() => setShowForgot(false)}
+                    >
+                      Back to Login
+                    </button>
+                  </motion.form>
+                )}
               </TabsContent>
               <TabsContent value="signup">
                 <motion.form
@@ -231,7 +328,7 @@ export default function AuthPage() {
                       {...signupForm.register("fullName", {
                         onChange: () => signupForm.trigger("fullName"),
                       })}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30"
+                      className="bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20"
                     />
                     {signupForm.formState.errors.fullName && (
                       <p className="text-red-400 text-sm mt-1">
@@ -249,7 +346,7 @@ export default function AuthPage() {
                       {...signupForm.register("email", {
                         onChange: () => signupForm.trigger("email"),
                       })}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30"
+                      className="bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20"
                     />
                     {signupForm.formState.errors.email && (
                       <p className="text-red-400 text-sm mt-1">
@@ -270,7 +367,7 @@ export default function AuthPage() {
                           signupForm.trigger("confirmPassword");
                         },
                       })}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30"
+                      className="bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20"
                     />
                     {signupForm.formState.errors.password && (
                       <p className="text-red-400 text-sm mt-1">
@@ -288,7 +385,7 @@ export default function AuthPage() {
                       {...signupForm.register("confirmPassword", {
                         onChange: () => signupForm.trigger("confirmPassword"),
                       })}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30"
+                      className="bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20"
                     />
                     {signupForm.formState.errors.confirmPassword && (
                       <p className="text-red-400 text-sm mt-1">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,8 @@ import {
   Edit,
   Trash2,
   Eye,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import { useDesigns, useCategories } from "@/hooks/use-supabase";
@@ -44,6 +46,9 @@ export default function AdminDesignsPage() {
   // States
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE_LIST = 10;
+  const ITEMS_PER_PAGE_GRID = 9;
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -383,24 +388,45 @@ export default function AdminDesignsPage() {
   };
 
   // Filter designs
-  const filteredDesigns = designs?.filter(
-    (design) =>
-      design.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      design.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      design.artist?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDesigns = designs
+    ?.filter(
+      (design) =>
+        design.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        design.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        design.artist?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+
+  const itemsPerPage =
+    viewMode === "list" ? ITEMS_PER_PAGE_LIST : ITEMS_PER_PAGE_GRID;
+  const totalPages = Math.ceil((filteredDesigns?.length || 0) / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedDesigns = filteredDesigns?.slice(startIndex, endIndex);
+
+  // Reset to first page when changing view mode
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [viewMode]);
 
   return (
     <div className="min-h-screen bg-black">
       <AdminSidebar />
       <div className="md:pl-64">
         <main className="p-8">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 mx-auto w-full">
             <h1 className="text-3xl font-bold tracking-tight text-white">
               Designs Management
             </h1>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-4">
               <Button
                 onClick={() => {
                   resetNewDesignState();
@@ -414,13 +440,13 @@ export default function AdminDesignsPage() {
               </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/50" />
                 <Input
                   type="search"
                   placeholder="Search designs..."
-                  className="pl-8 bg-black/30 border-white/10 text-white w-full"
+                  className="pl-8 bg-black/30 border-white/20 text-white w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -430,7 +456,7 @@ export default function AdminDesignsPage() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-white/10 text-black"
+                      className="border-white/20 text-black"
                     >
                       <Filter className="mr-2 h-4 w-4 " />
                       Filter
@@ -512,14 +538,16 @@ export default function AdminDesignsPage() {
             </div>
 
             {isLoading ? (
-              <div className="text-white/70">Loading designs...</div>
+              <div className="text-white/70 text-center">
+                Loading designs...
+              </div>
             ) : filteredDesigns && filteredDesigns.length > 0 ? (
               viewMode === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredDesigns.map((design) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                  {displayedDesigns.map((design) => (
                     <Card
                       key={design.id}
-                      className="bg-black/30 border-white/10 overflow-hidden group hover:border-white/20 transition-colors"
+                      className="bg-black/30 border-white/20 overflow-hidden group hover:border-white/20 transition-colors"
                     >
                       <div className="relative aspect-square overflow-hidden">
                         <img
@@ -614,10 +642,10 @@ export default function AdminDesignsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-md border border-white/10 overflow-hidden">
+                <div className="rounded-md border border-white/20 overflow-hidden w-full">
                   <table className="w-full">
                     <thead className="bg-black/30">
-                      <tr className="border-b border-white/10">
+                      <tr className="border-b border-white/20">
                         <th className="text-left p-4 text-white/70 font-medium">
                           Image
                         </th>
@@ -639,10 +667,10 @@ export default function AdminDesignsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredDesigns.map((design) => (
+                      {displayedDesigns.map((design) => (
                         <tr
                           key={design.id}
-                          className="border-b border-white/10 hover:bg-black/40"
+                          className="border-b border-white/20 hover:bg-black/40"
                         >
                           <td className="p-4">
                             <div className="w-12 h-12 rounded overflow-hidden">
@@ -654,8 +682,8 @@ export default function AdminDesignsPage() {
                             </div>
                           </td>
                           <td className="p-4">
-                            <div>
-                              <div className="font-medium text-white">
+                            <div className="max-w-[400px]">
+                              <div className="font-medium text-white line-clamp-1">
                                 {design.title}
                               </div>
                               <div className="text-sm text-white/70 line-clamp-1">
@@ -699,7 +727,7 @@ export default function AdminDesignsPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-white/70 hover:text-white"
+                                  className="h-8 w-8 text-white/70 hover:text-black"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
@@ -742,7 +770,38 @@ export default function AdminDesignsPage() {
                 </div>
               )
             ) : (
-              <div className="text-white/70">No designs found</div>
+              <div className="text-white/70 text-center">No designs found</div>
+            )}
+
+            {/* Pagination Controls */}
+            {!isLoading && totalPages > 1 && (
+              <div className="flex items-center justify-center space-x-2 py-4 text-white w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="border-white/20 text-black hover:bg-white/10 hover:text-white"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="border-white/20 text-black hover:bg-white/10 hover:text-white"
+                >
+                  Next <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
             )}
           </div>
         </main>
@@ -758,21 +817,21 @@ export default function AdminDesignsPage() {
           }
         }}
       >
-        <DialogContent className="bg-black/95 border border-white/10 text-white max-w-md">
-          <DialogHeader>
+        <DialogContent className="bg-black/95 border border-white/20 text-white max-w-sm sm:max-w-md md:max-w-4xl data-[state=open]:slide-in-from-top data-[state=closed]:slide-out-to-top sm:data-[state=open]:slide-in-from-bottom sm:data-[state=closed]:slide-out-to-bottom duration-300 ease-out">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Add New Design</DialogTitle>
             <DialogDescription className="text-white/70">
               Create a new tattoo design.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4 flex-1 overflow-y-auto max-h-[calc(90vh-180px)] sm:max-h-none">
             <div className="grid gap-2">
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 placeholder="Enter design title"
                 required
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white"
                 value={newDesign.title}
                 onChange={(e) =>
                   setNewDesign({
@@ -787,7 +846,7 @@ export default function AdminDesignsPage() {
               <Textarea
                 id="description"
                 placeholder="Enter design description"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white"
                 value={newDesign.description}
                 onChange={(e) =>
                   setNewDesign({
@@ -845,7 +904,7 @@ export default function AdminDesignsPage() {
                             });
                           }
                         }}
-                        className="rounded border-white/30 bg-white/10 text-white/70"
+                        className="rounded border-white/20 bg-white/10 text-white/70"
                       />
                       <Label
                         htmlFor={`category-${category.id}`}
@@ -870,14 +929,14 @@ export default function AdminDesignsPage() {
                     featured: checked as boolean,
                   })
                 }
-                className="rounded border-white/30 bg-white/10 text-white/70"
+                className="rounded border-white/20 bg-white/10 text-white/70"
               />
               <Label htmlFor="featured" className="text-white/70">
                 Featured design
               </Label>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="grid grid-cols-2 gap-4 sm:flex sm:justify-end flex-shrink-0">
             <Button
               variant="outline"
               onClick={() => setIsAddDialogOpen(false)}
@@ -898,21 +957,21 @@ export default function AdminDesignsPage() {
 
       {/* Edit Design Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-black/95 border border-white/10 text-white max-w-md">
-          <DialogHeader>
+        <DialogContent className="bg-black/95 border border-white/20 text-white max-w-sm sm:max-w-md md:max-w-4xl data-[state=open]:slide-in-from-top data-[state=closed]:slide-out-to-top sm:data-[state=open]:slide-in-from-bottom sm:data-[state=closed]:slide-out-to-bottom duration-300 ease-out">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Edit Design</DialogTitle>
             <DialogDescription className="text-white/70">
               Edit the tattoo design details.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4 flex-1 overflow-y-auto max-h-[calc(90vh-180px)] sm:max-h-none">
             <div className="grid gap-2">
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 placeholder="Enter design title"
                 required
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white"
                 value={newDesign.title}
                 onChange={(e) =>
                   setNewDesign({
@@ -927,7 +986,7 @@ export default function AdminDesignsPage() {
               <Textarea
                 id="description"
                 placeholder="Enter design description"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white"
                 value={newDesign.description}
                 onChange={(e) =>
                   setNewDesign({
@@ -986,7 +1045,7 @@ export default function AdminDesignsPage() {
                             });
                           }
                         }}
-                        className="rounded border-white/30 bg-white/10 text-white/70"
+                        className="rounded border-white/20 bg-white/10 text-white/70"
                       />
                       <Label
                         htmlFor={`category-${category.id}`}
@@ -1011,18 +1070,18 @@ export default function AdminDesignsPage() {
                     featured: checked as boolean,
                   })
                 }
-                className="rounded border-white/30 bg-white/10 text-white/70"
+                className="rounded border-white/20 bg-white/10 text-white/70"
               />
               <Label htmlFor="featured" className="text-white/70">
                 Featured design
               </Label>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="grid grid-cols-2 gap-4 sm:flex sm:justify-end flex-shrink-0">
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
-              className="border-white/10 text-black hover:bg-white/10"
+              className="bg-white text-black hover:bg-white/90"
             >
               Cancel
             </Button>
@@ -1039,7 +1098,7 @@ export default function AdminDesignsPage() {
 
       {/* Delete Confirm Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="bg-black/95 border border-white/10 text-white">
+        <DialogContent className="bg-black/95 border border-white/20 text-white max-w-xs sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Confirm Delete</DialogTitle>
             <DialogDescription className="text-white/70">
@@ -1047,11 +1106,11 @@ export default function AdminDesignsPage() {
               undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="grid grid-cols-2 gap-4 sm:flex sm:justify-end flex-shrink-0">
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
-              className="border-white/10 text-black hover:bg-white/10"
+              className="border-white/20 text-black hover:bg-white/10 hover:text-white"
             >
               Cancel
             </Button>

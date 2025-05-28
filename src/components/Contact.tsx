@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,27 +31,18 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import axiosInstance from "@/lib/axios";
-import { addDays } from "date-fns";
-import { useCategories } from "@/hooks/use-supabase";
+import { format, setMinutes, setHours, addDays } from "date-fns";
+import { useCategories, useBookings } from "@/hooks/use-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const MOCK_CATEGORIES = [
-  { id: "black-and-grey", name: "Black & Grey" },
-  { id: "realism", name: "Realism" },
-  { id: "traditional", name: "Traditional" },
-  { id: "neo-traditional", name: "Neo-Traditional" },
-  { id: "japanese", name: "Japanese" },
-  { id: "geometric", name: "Geometric" },
-  { id: "minimalist", name: "Minimalist" },
-  { id: "portrait", name: "Portrait" },
-  { id: "other", name: "Other" },
-];
+import { useMemo } from "react";
 
 const Contact: React.FC = () => {
   const { toast } = useToast();
   const { categories = [] } = useCategories();
-  const { user } = useAuth();
+  const { bookings = [] } = useBookings();
+  const { user, userProfile, checkBookingRespond } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStep, setFormStep] = useState(0);
@@ -61,11 +52,22 @@ const Contact: React.FC = () => {
     email: "",
     phone: "",
     style: "",
-    size: "medium",
+    size: "Medium (4-6')",
     placement: "",
     idea: "",
     date: null as Date | null,
   });
+
+  useEffect(() => {
+    if (user && userProfile) {
+      setFormData((prev) => ({
+        ...prev,
+        name: userProfile.full_name || "",
+        email: user.email || "",
+        phone: userProfile.phone || "",
+      }));
+    }
+  }, [user, userProfile]);
 
   const validateField = (name: string, value: string | Date | null) => {
     const newErrors = { ...errors };
@@ -184,6 +186,78 @@ const Contact: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const LoginPromt = () => {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
+          <Shield className="w-8 h-8 text-white" />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-3">
+          Secure Consultation
+        </h3>
+        <p className="text-white/70 max-w-md mb-8">
+          Please login to request a consultation. This helps us maintain the
+          security and privacy of your personal information.
+        </p>
+        <Button
+          onClick={handleLogin}
+          className="bg-white text-black hover:bg-white/90 rounded-full px-8 py-6 text-lg font-medium"
+        >
+          Login to Continue
+        </Button>
+      </div>
+    );
+  };
+
+  const WaitingRespond = () => {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
+          <Clock className="w-8 h-8 text-white" />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-3">
+          Please wait for the respond
+        </h3>
+        <p className="text-white/70 max-w-md mb-8">
+          Wait until the admin responds to your appointment before you can book
+          another one.
+        </p>
+      </div>
+    );
+  };
+
+  const excludedTimes = useMemo(() => {
+    if (!bookings || !formData.date) return [];
+
+    const selectedDateStr = format(formData.date, "yyyy-MM-dd");
+
+    const filtered = bookings.filter((b) => {
+      if (!b.date) return false;
+      const bookingDateStr = b.date.slice(0, 10);
+      return b.respond === "Confirm" && bookingDateStr === selectedDateStr;
+    });
+
+    const blocked: Date[] = [];
+    filtered.forEach((b) => {
+      const utcDate = new Date(b.date);
+      const localDate = new Date(
+        utcDate.getUTCFullYear(),
+        utcDate.getUTCMonth(),
+        utcDate.getUTCDate(),
+        utcDate.getUTCHours(),
+        utcDate.getUTCMinutes(),
+        utcDate.getUTCSeconds()
+      );
+      for (let i = -2; i < 3; i++) {
+        const slot = new Date(localDate.getTime());
+        slot.setMinutes(slot.getMinutes() + i * 30);
+        blocked.push(slot);
+      }
+    });
+
+    return blocked;
+  }, [bookings, formData.date]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -200,6 +274,14 @@ const Contact: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      const date = formData.date;
+      const localDateStr = date
+        ? `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+            date.getDate()
+          )} ${pad(date.getHours())}:${pad(date.getMinutes())}:00+00`
+        : null;
+
       const formPayload = {
         name: formData.name,
         email: formData.email,
@@ -208,9 +290,8 @@ const Contact: React.FC = () => {
         size: formData.size,
         placement: formData.placement,
         idea: formData.idea,
-        date: formData.date ? formData.date.toISOString() : null,
+        date: localDateStr,
       };
-
       await axiosInstance.post("", formPayload);
 
       toast({
@@ -251,6 +332,73 @@ const Contact: React.FC = () => {
 
   const handleLogin = () => {
     navigate("/login");
+  };
+
+  const [hoursLeft, setHoursLeft] = useState(0);
+
+  const Rejected = () => {
+    const createdAt = new Date(checkBookingRespond.created_at);
+    const now = new Date();
+
+    const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+
+    if (hoursDiff >= 24) {
+    } else {
+      const remainingHours = 24 - hoursDiff;
+      setHoursLeft(remainingHours);
+
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
+            <Clock className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-3">
+            Not enough time yet
+          </h3>
+          <p className="text-white/70 max-w-md mb-8">
+            You need to wait another {hoursLeft.toFixed(1)} hours before you can
+            book a new appointment. Please be patient!
+          </p>
+        </div>
+      );
+    }
+  };
+
+  const Confirmed = () => {
+    const appointmentDate = new Date(checkBookingRespond.date);
+    const now = new Date();
+
+    if (now >= appointmentDate) {
+    } else {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
+            <Clock className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-3">
+            Please wait until your appointment is completed
+          </h3>
+          <p className="text-white/70 mt-2 mb-4 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+            Your current appointment will be start at <br></br>
+            {checkBookingRespond?.date
+              ? new Date(checkBookingRespond.date).toLocaleString(undefined, {
+                  hour12: false,
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "UTC",
+                })
+              : ""}
+          </p>
+          <p className="text-white/70 max-w-md mb-8">
+            You must wait until your current appointment is completed before
+            booking a new one. Please be patient!
+          </p>
+        </div>
+      );
+    }
   };
 
   return (
@@ -296,7 +444,7 @@ const Contact: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 h-full">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/20 h-full">
                 <div className="relative mb-8">
                   <div className="absolute -top-12 -left-8 w-24 h-24 rounded-full bg-white/5 blur-xl"></div>
                   <h3 className="text-2xl font-bold text-white mb-2 relative">
@@ -318,19 +466,13 @@ const Contact: React.FC = () => {
                         </h4>
                         <ul className="space-y-2 text-white/70">
                           <li className="flex justify-between">
-                            <span className="me-5">Tuesday - Friday</span>
+                            <span className="me-5">Monday - Saturday</span>
                             <span className="text-white">
-                              12:00 PM - 8:00 PM
+                              08:30 AM - 9:00 PM
                             </span>
                           </li>
                           <li className="flex justify-between">
-                            <span>Saturday</span>
-                            <span className="text-white">
-                              10:00 AM - 6:00 PM
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Sunday - Monday</span>
+                            <span>Sunday</span>
                             <span className="text-white/50">Closed</span>
                           </li>
                         </ul>
@@ -410,7 +552,7 @@ const Contact: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 h-full relative overflow-hidden">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/20 h-full relative overflow-hidden">
                 {/* Form Success State */}
                 {formStep === 1 ? (
                   <motion.div
@@ -435,7 +577,7 @@ const Contact: React.FC = () => {
                       className="border-white/20 text-black hover:bg-white/40 hover:text-white"
                       onClick={resetForm}
                     >
-                      Submit Another Request
+                      Continue...
                     </Button>
                   </motion.div>
                 ) : (
@@ -449,25 +591,14 @@ const Contact: React.FC = () => {
                     </div>
 
                     {!user ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
-                          <Shield className="w-8 h-8 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-3">
-                          Secure Consultation
-                        </h3>
-                        <p className="text-white/70 max-w-md mb-8">
-                          Please login to request a consultation. This helps us
-                          maintain the security and privacy of your personal
-                          information.
-                        </p>
-                        <Button
-                          onClick={handleLogin}
-                          className="bg-white text-black hover:bg-white/90 rounded-full px-8 py-6 text-lg font-medium"
-                        >
-                          Login to Continue
-                        </Button>
-                      </div>
+                      <LoginPromt />
+                    ) : checkBookingRespond?.email &&
+                      checkBookingRespond?.respond == null ? (
+                      <WaitingRespond />
+                    ) : checkBookingRespond?.respond === "Reject" ? (
+                      <Rejected />
+                    ) : checkBookingRespond?.respond === "Confirm" ? (
+                      <Confirmed />
                     ) : (
                       <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -487,7 +618,7 @@ const Contact: React.FC = () => {
                                 setFormData({ ...formData, name: value });
                                 validateField("name", value);
                               }}
-                              className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                              className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 focus:ring-white/10 ${
                                 errors.name ? "border-red-500" : ""
                               }`}
                             />
@@ -515,7 +646,7 @@ const Contact: React.FC = () => {
                                 setFormData({ ...formData, email: value });
                                 validateField("email", value);
                               }}
-                              className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                              className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 focus:ring-white/10 ${
                                 errors.email ? "border-red-500" : ""
                               }`}
                             />
@@ -545,7 +676,7 @@ const Contact: React.FC = () => {
                                 setFormData({ ...formData, phone: value });
                                 validateField("phone", value);
                               }}
-                              className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                              className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 focus:ring-white/10 ${
                                 errors.phone ? "border-red-500" : ""
                               }`}
                             />
@@ -577,7 +708,7 @@ const Contact: React.FC = () => {
                               }}
                             >
                               <SelectTrigger
-                                className={`bg-white/5 border-white/10 text-white focus:ring-white/10 ${
+                                className={`bg-white/5 border-white/20 text-white focus:ring-white/10 ${
                                   errors.style ? "border-red-500" : ""
                                 }`}
                               >
@@ -602,7 +733,7 @@ const Contact: React.FC = () => {
                             Approximate Size
                           </label>
                           <RadioGroup
-                            defaultValue="medium"
+                            value={formData.size}
                             className="flex flex-wrap gap-4"
                             onValueChange={(value) =>
                               setFormData({ ...formData, size: value })
@@ -610,7 +741,7 @@ const Contact: React.FC = () => {
                           >
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem
-                                value="small"
+                                value="Small (2-3')"
                                 id="size-small"
                                 className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
                               />
@@ -618,12 +749,12 @@ const Contact: React.FC = () => {
                                 htmlFor="size-small"
                                 className="text-white/80"
                               >
-                                Small (2-3")
+                                Small (2-3')
                               </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem
-                                value="medium"
+                                value="Medium (4-6')"
                                 id="size-medium"
                                 className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
                               />
@@ -631,12 +762,12 @@ const Contact: React.FC = () => {
                                 htmlFor="size-medium"
                                 className="text-white/80"
                               >
-                                Medium (4-6")
+                                Medium (4-6')
                               </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem
-                                value="large"
+                                value="Large (7-10')"
                                 id="size-large"
                                 className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
                               />
@@ -644,12 +775,12 @@ const Contact: React.FC = () => {
                                 htmlFor="size-large"
                                 className="text-white/80"
                               >
-                                Large (7-10")
+                                Large (7-10')
                               </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem
-                                value="extra-large"
+                                value="Extra large (11'+)"
                                 id="size-xl"
                                 className="text-white border-white data-[state=checked]:bg-white data-[state=checked]:border-white"
                               />
@@ -657,7 +788,7 @@ const Contact: React.FC = () => {
                                 htmlFor="size-xl"
                                 className="text-white/80"
                               >
-                                Extra Large (11"+)
+                                Extra Large (11'+)
                               </Label>
                             </div>
                           </RadioGroup>
@@ -679,7 +810,7 @@ const Contact: React.FC = () => {
                               setFormData({ ...formData, placement: value });
                               validateField("placement", value);
                             }}
-                            className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                            className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 focus:ring-white/10 ${
                               errors.placement ? "border-red-500" : ""
                             }`}
                           />
@@ -707,7 +838,7 @@ const Contact: React.FC = () => {
                               setFormData({ ...formData, idea: value });
                               validateField("idea", value);
                             }}
-                            className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-white/10 ${
+                            className={`bg-white/5 border-white/20 text-white placeholder:text-white/30 focus:border-white/20 focus:ring-white/10 ${
                               errors.idea ? "border-red-500" : ""
                             }`}
                           />
@@ -727,7 +858,7 @@ const Contact: React.FC = () => {
                           </label>
                           <div
                             className={`flex items-center gap-2 bg-white/5 border ${
-                              errors.date ? "border-red-500" : "border-white/10"
+                              errors.date ? "border-red-500" : "border-white/20"
                             } rounded-md px-3 py-2`}
                           >
                             <Calendar className="h-5 w-5 text-white/50 dark:text-black/50" />
@@ -738,7 +869,8 @@ const Contact: React.FC = () => {
                                 validateField("date", date);
                               }}
                               locale={enUS}
-                              placeholderText="mm/dd/yyyy"
+                              placeholderText="mm dd,yyyy h:m AM or PM"
+                              required
                               className="border-0 bg-transparent text-white dark:text-black focus:ring-0 p-0 focus:outline-none"
                               showTimeSelect
                               timeFormat="HH:mm"
@@ -750,6 +882,17 @@ const Contact: React.FC = () => {
                                 tomorrow.setHours(0, 0, 0, 0);
                                 return date >= tomorrow;
                               }}
+                              minTime={
+                                formData.date
+                                  ? setHours(setMinutes(formData.date, 0), 8)
+                                  : setHours(setMinutes(new Date(), 0), 8)
+                              }
+                              maxTime={
+                                formData.date
+                                  ? setHours(setMinutes(formData.date, 0), 21)
+                                  : setHours(setMinutes(new Date(), 0), 21)
+                              }
+                              excludeTimes={excludedTimes}
                             />
                           </div>
                           {errors.date && (

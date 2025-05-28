@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,7 @@ const Gallery: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const galleryRef = useRef<HTMLDivElement>(null);
+  const [isViewAllDialogOpen, setIsViewAllDialogOpen] = useState(false);
 
   const { categories = [] } = useCategories();
   const { designs = [] } = useDesigns();
@@ -30,15 +31,19 @@ const Gallery: React.FC = () => {
     setIsLoaded(true);
   }, []);
 
-  const filteredImages =
-    selectedCategory === "All"
-      ? designs
-      : designs?.filter((design) =>
-          design.design_categories?.some(
-            (dc) =>
-              dc.category?.name.toLowerCase() === selectedCategory.toLowerCase()
-          )
-        ) || [];
+  const filteredImages = useMemo(
+    () =>
+      selectedCategory === "All"
+        ? designs
+        : designs?.filter((design) =>
+            design.design_categories?.some(
+              (dc) =>
+                dc.category?.name.toLowerCase() ===
+                selectedCategory.toLowerCase()
+            )
+          ) || [],
+    [selectedCategory, designs]
+  );
 
   const handleImageClick = (image: any) => {
     const index = filteredImages.findIndex((item) => item.id === image.id);
@@ -68,6 +73,8 @@ const Gallery: React.FC = () => {
       if (e.key === "ArrowLeft") handlePrevImage();
       if (e.key === "ArrowRight") handleNextImage();
       if (e.key === "Escape") setIsDialogOpen(false);
+    } else if (isViewAllDialogOpen) {
+      if (e.key === "Escape") setIsViewAllDialogOpen(false);
     }
   };
 
@@ -170,7 +177,7 @@ const Gallery: React.FC = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
-              {filteredImages?.map((item, index) => (
+              {filteredImages?.slice(0, 8).map((item, index) => (
                 <GalleryImage
                   key={item.id}
                   item={{
@@ -213,15 +220,17 @@ const Gallery: React.FC = () => {
           >
             <Button
               variant="outline"
-              className="rounded-full px-8 py-6 text-white border-white/30 hover:bg-white/10 hover:border-white/50"
+              className="rounded-full px-8 py-6 text-black border-white/20 hover:bg-white/10 hover:text-white hover:border-white/50"
+              onClick={() => setIsViewAllDialogOpen(true)}
             >
               View More Work
             </Button>
           </motion.div>
         )}
 
+        {/* Single Image Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-4xl bg-black/95 p-0 border border-white/10 rounded-lg overflow-hidden backdrop-blur-xl h-[90vh] flex flex-col">
+          <DialogContent className="sm:max-w-4xl bg-black/95 p-0 border border-white/20 rounded-lg overflow-hidden backdrop-blur-xl h-[90vh] flex flex-col">
             <button
               onClick={() => setIsDialogOpen(false)}
               className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 p-1.5 sm:p-2 rounded-full bg-white/30 text-white/70 hover:text-white hover:bg-black/70 transition-all hover:scale-110"
@@ -269,26 +278,22 @@ const Gallery: React.FC = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative flex-1 flex flex-col items-center"
+                    className="relative flex flex-col h-full items-center"
                   >
-                    {/* Image container with fixed height */}
-                    <div className="flex-1 min-h-0 relative w-full">
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                        <div className="w-[85%] sm:w-[400px] md:w-[500px] h-[200px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-lg relative group">
-                          <motion.img
-                            src={selectedImage.image_url || "/placeholder.svg"}
-                            alt={selectedImage.title}
-                            className="w-full h-full object-contain transition-transform duration-700"
-                            initial={{ scale: 0.95 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.4 }}
-                          />
-                        </div>
-                      </div>
+                    {/* Image Container */}
+                    <div className="w-[90%] max-w-sm sm:w-[350px] md:w-[300px] md:max-w-[300px] max-h-[60vh] sm:max-h-none overflow-hidden rounded-lg relative group flex-shrink-0 flex items-center justify-center mx-auto">
+                      <motion.img
+                        src={selectedImage.image_url || "/placeholder.svg"}
+                        alt={selectedImage.title}
+                        className="w-full h-full object-contain transition-transform duration-700"
+                        initial={{ scale: 0.95 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.4 }}
+                      />
                     </div>
 
                     {/* Image info with enhanced layout */}
-                    <div className="w-full p-3 sm:p-4 bg-gradient-to-t from-black via-black/95 to-black/90">
+                    <div className="w-full p-3 sm:p-4 bg-gradient-to-t from-black via-black/95 to-black/90 flex-1 overflow-y-auto sm:flex-none">
                       <div className="flex flex-col items-center gap-3 mb-3">
                         <div className="flex-1 text-center">
                           <div className="flex items-center justify-center gap-3 mb-2">
@@ -298,7 +303,7 @@ const Gallery: React.FC = () => {
                             </span>
                             <div className="w-6 sm:w-8 h-[1px] bg-gradient-to-l from-transparent to-white/70"></div>
                           </div>
-                          <h3 className="text-white text-lg sm:text-xl font-semibold mb-2 mt-14">
+                          <h3 className="text-white text-lg sm:text-xl font-semibold mb-2">
                             {selectedImage.title}
                           </h3>
                           <div className="flex flex-wrap justify-center gap-2">
@@ -330,12 +335,16 @@ const Gallery: React.FC = () => {
 
                       <div className="grid grid-cols-1 gap-3">
                         <div>
-                          <p className="text-white/80 text-sm leading-relaxed text-center max-w-2xl mx-auto">
-                            {selectedImage.description}
+                          <p className="text-white/80 text-sm leading-relaxed text-center max-w-2xl mx-auto mb-3">
+                            {selectedImage.description &&
+                            selectedImage.description.length > 150
+                              ? selectedImage.description.substring(0, 150) +
+                                "..."
+                              : selectedImage.description}
                           </p>
 
                           {/* Enhanced details section */}
-                          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-2xl mx-auto">
+                          <div className="mt-3 grid-cols-1 sm:grid-cols-3 gap-2 max-w-2xl mx-auto hidden sm:grid">
                             <div className="p-2 sm:p-3 bg-white/5 border border-white rounded-lg text-center">
                               <h4 className="text-white/50 text-xs uppercase mb-1 font-medium">
                                 Artist
@@ -364,6 +373,55 @@ const Gallery: React.FC = () => {
                 </AnimatePresence>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* View All Images Dialog */}
+        <Dialog
+          open={isViewAllDialogOpen}
+          onOpenChange={setIsViewAllDialogOpen}
+        >
+          <DialogContent className="sm:max-w-6xl bg-black/95 p-6 border border-white/20 rounded-lg overflow-hidden backdrop-blur-xl h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">All Designs</h2>
+              <button
+                onClick={() => setIsViewAllDialogOpen(false)}
+                className="z-30 p-2 rounded-full bg-white/30 text-white/70 hover:text-white hover:bg-black/70 transition-all hover:scale-110"
+                aria-label="Close dialog"
+              >
+                <X size={20} className="pointer-events-none" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-4 -mr-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {filteredImages?.map((item, index) => (
+                  <GalleryImage
+                    key={item.id}
+                    item={{
+                      id: item.id,
+                      title: item.title,
+                      description: item.description || "",
+                      imageUrl: item.image_url || "/placeholder.svg",
+                      category:
+                        item.design_categories?.map(
+                          (dc) => dc.category?.name || ""
+                        ) || [],
+                    }}
+                    onClick={() => {
+                      setIsViewAllDialogOpen(false); // Close view all dialog
+                      handleImageClick(item); // Open single image dialog
+                    }}
+                    index={index} // Index might not be relevant for animation in this grid
+                    isLoaded={true} // Assume loaded in this context
+                  />
+                ))}
+              </div>
+              {filteredImages.length === 0 && (
+                <div className="text-center py-16 text-white/70">
+                  No images found.
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

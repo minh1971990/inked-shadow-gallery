@@ -25,8 +25,8 @@ export function useDesigns() {
             )
           `
         )
-
-        .order("created_at", { ascending: false });
+        .order("featured", { ascending: false })
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       return data;
@@ -138,16 +138,34 @@ export function useDesigns() {
   };
 }
 
-export function useCategories() {
+export function useCategories(sortBy: "newest" | "oldest" = "newest") {
   const queryClient = useQueryClient();
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", sortBy],
+    queryFn: async () => {
+      const ascendingOrder = sortBy === "oldest";
+
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("featured", { ascending: false })
+        .order("created_at", { ascending: ascendingOrder });
+
+      if (error) throw error;
+      return data as Tables["categories"]["Row"][];
+    },
+  });
+
+  const { data: featuredCategories } = useQuery({
+    queryKey: ["featured-categories"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
         .select("*")
-        .order("created_at", { ascending: false });
+        .eq("featured", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
 
       if (error) throw error;
       return data as Tables["categories"]["Row"][];
@@ -203,6 +221,7 @@ export function useCategories() {
 
   return {
     categories,
+    featuredCategories,
     isLoading,
     addCategory,
     updateCategory,
@@ -325,13 +344,11 @@ export function useStats() {
         .select("*", { count: "exact", head: true })
         .gte("created_at", firstDayOfMonth.toISOString());
 
-      // Get new designs this week
-      const firstDayOfWeek = new Date(today);
-      firstDayOfWeek.setDate(today.getDate() - today.getDay());
-      const { count: newDesignsThisWeek } = await supabase
+      // Get new designs this month
+      const { count: newDesignsThisMonth } = await supabase
         .from("designs")
         .select("*", { count: "exact", head: true })
-        .gte("created_at", firstDayOfWeek.toISOString());
+        .gte("created_at", firstDayOfMonth.toISOString());
 
       // Get new categories this month
       const { count: newCategoriesThisMonth } = await supabase
@@ -352,6 +369,15 @@ export function useStats() {
         .from("bookings")
         .select("date")
         .gte("date", thirtyDaysAgo.toISOString());
+
+      // Get monthly designs for the last 6 months
+      const sixMonthsAgo = new Date(today);
+      sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+      const { data: monthlyDesigns } = await supabase
+        .from("designs")
+        .select("created_at")
+        .gte("created_at", sixMonthsAgo.toISOString());
 
       // Process daily stats
       const dailyData = Array.from({ length: 30 }, (_, i) => {
@@ -380,6 +406,28 @@ export function useStats() {
         };
       }).reverse();
 
+      // Process monthly designs
+      const monthlyData = Array.from({ length: 6 }, (_, i) => {
+        const date = new Date(today);
+        date.setMonth(today.getMonth() - i);
+        date.setDate(1);
+        date.setHours(0, 0, 0, 0);
+        const nextMonth = new Date(date);
+        nextMonth.setMonth(date.getMonth() + 1);
+
+        const designs =
+          monthlyDesigns?.filter(
+            (design) =>
+              new Date(design.created_at) >= date &&
+              new Date(design.created_at) < nextMonth
+          ).length || 0;
+
+        return {
+          name: date.toLocaleDateString("en-US", { month: "short" }),
+          designs,
+        };
+      }).reverse();
+
       return {
         totalUsers,
         totalBookings,
@@ -387,9 +435,10 @@ export function useStats() {
         totalCategories,
         todayBookings,
         newUsersThisMonth,
-        newDesignsThisWeek,
         newCategoriesThisMonth,
         dailyData,
+        monthlyData,
+        newDesignsThisMonth,
       };
     },
   });

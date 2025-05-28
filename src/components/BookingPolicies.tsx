@@ -83,7 +83,7 @@ const BookingPolicies: React.FC = () => {
             onValueChange={setActiveTab}
           >
             <div className="flex justify-center mb-8">
-              <TabsList className="bg-white/5 backdrop-blur-sm border border-white/10 p-1 rounded-full w-full sm:w-auto relative flex items-center">
+              <TabsList className="bg-white/5 backdrop-blur-sm border border-white/20 p-1 rounded-full w-full sm:w-auto relative flex items-center">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-50"></div>
                 <TabsTrigger
                   value="booking"
@@ -126,12 +126,12 @@ const BookingPolicies: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 sm:p-8"
+              className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 p-6 sm:p-8"
             >
               <TabsContent value="booking" className="mt-0">
                 <div className="space-y-8">
                   <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
                       <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
                     </div>
                     <div>
@@ -162,7 +162,7 @@ const BookingPolicies: React.FC = () => {
                   </div>
 
                   <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
                       <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
                     </div>
                     <div>
@@ -199,7 +199,7 @@ const BookingPolicies: React.FC = () => {
                   </div>
 
                   <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
                       <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
                     </div>
                     <div>
@@ -240,7 +240,7 @@ const BookingPolicies: React.FC = () => {
               <TabsContent value="cancellation" className="mt-0">
                 <div className="space-y-8">
                   <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
                       <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
                     </div>
                     <div>
@@ -313,7 +313,7 @@ const BookingPolicies: React.FC = () => {
                   </div>
 
                   <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
                       <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
                     </div>
                     <div>
@@ -323,7 +323,7 @@ const BookingPolicies: React.FC = () => {
                       <Accordion type="single" collapsible className="w-full">
                         <AccordionItem
                           value="item-1"
-                          className="border-white/10"
+                          className="border-white/20"
                         >
                           <AccordionTrigger className="text-white hover:text-white/80 text-sm sm:text-base">
                             Illness or COVID-19 Symptoms
@@ -338,7 +338,7 @@ const BookingPolicies: React.FC = () => {
                         </AccordionItem>
                         <AccordionItem
                           value="item-2"
-                          className="border-white/10"
+                          className="border-white/20"
                         >
                           <AccordionTrigger className="text-white hover:text-white/80 text-sm sm:text-base">
                             Medical Emergencies
@@ -352,7 +352,7 @@ const BookingPolicies: React.FC = () => {
                         </AccordionItem>
                         <AccordionItem
                           value="item-3"
-                          className="border-white/10"
+                          className="border-white/20"
                         >
                           <AccordionTrigger className="text-white hover:text-white/80 text-sm sm:text-base">
                             Artist Cancellations
@@ -374,7 +374,7 @@ const BookingPolicies: React.FC = () => {
               <TabsContent value="reschedule" className="mt-0">
                 <div className="space-y-8">
                   <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
                       <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
                     </div>
                     <div>

@@ -1,8 +1,8 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 
 export const metadata: Metadata = {
@@ -15,19 +15,52 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
+  try {
+    const cookieStore = cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
 
-  // Check if user is authenticated and is an admin
-  if (!session || session.user.role !== "ADMIN") {
-    redirect("/login?callbackUrl=/admin");
-  }
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
 
-  return (
-    <div className="flex h-screen bg-black text-white">
-      <AdminSidebar />
-      <div className="flex-1 overflow-auto">
-        <main className="p-6">{children}</main>
+    if (sessionError) {
+      console.error("Session fetch error:", sessionError);
+    }
+
+    if (!session) {
+      console.log("No session found, redirecting to login.");
+      redirect("/login?redirectTo=/admin");
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .single();
+
+    if (profileError) {
+      console.error("Profile fetch error:", profileError);
+    }
+
+    if (!profile || profile.role !== "admin") {
+      console.log("User is not admin, redirecting to home.");
+      redirect("/");
+    }
+
+    console.log("Admin profile found, rendering layout.");
+    return (
+      <div className="flex h-screen bg-black text-white">
+        <AdminSidebar />
+        <div className="flex-1 overflow-auto">
+          <main className="p-6">{children}</main>
+        </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error("Error in AdminLayout:", error);
+    throw error;
+  }
 }

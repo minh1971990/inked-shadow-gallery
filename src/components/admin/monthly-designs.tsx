@@ -5,19 +5,16 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Line,
-  LineChart,
 } from "recharts";
 
-interface OverviewProps {
+interface MonthlyDesignsProps {
   data: {
     name: string;
-    users: number;
-    bookings: number;
+    designs: number;
   }[];
 }
 
-export function Overview({ data }: OverviewProps) {
+export function MonthlyDesigns({ data }: MonthlyDesignsProps) {
   const customTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -39,7 +36,7 @@ export function Overview({ data }: OverviewProps) {
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
+        <BarChart data={data}>
           <XAxis
             dataKey="name"
             stroke="#888888"
@@ -54,21 +51,17 @@ export function Overview({ data }: OverviewProps) {
             axisLine={false}
             tickFormatter={(value) => `${value}`}
           />
-          <Tooltip content={customTooltip} />
-          <Line
-            type="monotone"
-            dataKey="users"
-            stroke="#8884d8"
-            strokeWidth={2}
-            activeDot={{ r: 8 }}
+          <Tooltip
+            content={customTooltip}
+            contentStyle={{
+              backgroundColor: "rgba(0, 0, 0, 0.8)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "6px",
+              color: "white",
+            }}
           />
-          <Line
-            type="monotone"
-            dataKey="bookings"
-            stroke="#82ca9d"
-            strokeWidth={2}
-          />
-        </LineChart>
+          <Bar dataKey="designs" fill="#FFB6C1" radius={[4, 4, 0, 0]} />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BookingProvider } from "@/components/BookingContent";
 import Index from "./pages/Index";
 import AuthPage from "@/pages/auth/page";
+import ResetPasswordPage from "@/pages/auth/reset-password";
 import AdminDashboard from "@/pages/admin/page";
 import AdminUsersPage from "@/pages/admin/users/page";
 import AdminDesignsPage from "@/pages/admin/designs/page";
@@ -27,6 +28,7 @@ const AppContent = () => {
 
       {/* Auth Routes */}
       <Route path="/login" element={<AuthPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Admin Routes - Protected */}
       <Route

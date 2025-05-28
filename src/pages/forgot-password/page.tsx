@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
         </div>
       </Link>
 
-      <div className="w-full max-w-md bg-black/50 backdrop-blur-md border border-white/10 rounded-lg p-6">
+      <div className="w-full max-w-md bg-black/50 backdrop-blur-md border border-white/20 rounded-lg p-6">
         {isSubmitted ? (
           <div className="text-center py-6">
             <div className="mx-auto w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4">
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 variant="outline"
-                className="border-white/10 text-white hover:bg-white/10"
+                className="border-white/20 text-white hover:bg-white/10"
                 onClick={() => setIsSubmitted(false)}
               >
                 Try Again
@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
                     id="email"
                     type="email"
                     placeholder="your.email@example.com"
-                    className="pl-10 bg-black/30 border-white/10 text-white"
+                    className="pl-10 bg-black/30 border-white/20 text-white"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
